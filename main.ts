@@ -19,6 +19,7 @@ const UI_HEAD = `
     .gold-gradient { background: linear-gradient(180deg, #f3ca52 0%, #a87f00 100%); }
     .card-bg { background-color: #111; border: 1px solid #222; }
     .match-row { background-color: #141414; border-bottom: 1px solid #222; text-align: center; }
+    .match-row:hover { background-color: #1a1a1a; }
     .stripe-input { width: 100%; padding: 12px; border: 1px solid #333; background: #1a1a1a; border-radius: 5px; color: #fff; font-size: 16px; margin-bottom: 15px; outline: none; }
     .btn-main { background: #f3ca52; color: #000; width: 100%; padding: 14px; border-radius: 5px; font-weight: 900; cursor: pointer; }
     .unlock-btn { background: #0070f3; color: #fff; padding: 8px 20px; border-radius: 99px; font-weight: 900; font-size: 12px; cursor: pointer; border: none; box-shadow: 0 4px 14px rgba(0,118,255,0.4); text-transform: uppercase; }
@@ -26,7 +27,6 @@ const UI_HEAD = `
     #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: #1a1a1a; border-left: 4px solid #f3ca52; color: white; padding: 12px 20px; border-radius: 6px; margin-bottom: 8px; transform: translateX(120%); transition: 0.3s; font-weight: bold; font-size: 12px; }
     .toast.show { transform: translateX(0); }
-    .toast.error { border-left-color: #ef4444; }
 
     #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 10000; visibility: hidden; opacity: 0; transition: 0.2s; }
     #custom-modal.active { visibility: visible; opacity: 1; }
@@ -45,26 +45,30 @@ serve(async (req) => {
       <div id="custom-modal"><div class="modal-content"><h3 id="modal-msg" class="text-md font-bold mb-6 text-yellow-500 uppercase italic">Confirm?</h3><div class="flex gap-3"><button id="modal-yes" class="flex-1 bg-yellow-600 text-black font-black py-2 rounded-md text-xs">YES</button><button onclick="closeModal()" class="flex-1 bg-zinc-800 text-zinc-400 font-bold py-2 rounded-md text-xs">NO</button></div></div></div>
       
       <div id="pass-modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[10001]">
-         <div class="modal-content">
-            <h3 class="text-md font-bold mb-6 text-yellow-500 uppercase italic">Change Your Password</h3>
-            <input type="password" id="oldPass" placeholder="Current Password" class="stripe-input">
-            <input type="password" id="newPass" placeholder="New Password" class="stripe-input">
-            <div class="flex gap-3">
-               <button onclick="submitPassChange()" class="flex-1 bg-yellow-600 text-black font-black py-2 rounded-md text-xs">UPDATE</button>
-               <button onclick="document.getElementById('pass-modal').style.display='none'" class="flex-1 bg-zinc-800 text-zinc-400 font-bold py-2 rounded-md text-xs">CANCEL</button>
-            </div>
-         </div>
+         <div class="modal-content"><h3 class="text-md font-bold mb-6 text-yellow-500 uppercase italic">Change Password</h3><input type="password" id="oldPass" placeholder="Current Password" class="stripe-input"><input type="password" id="newPass" placeholder="New Password" class="stripe-input"><div class="flex gap-3"><button onclick="submitPassChange()" class="flex-1 bg-yellow-600 text-black font-black py-2 rounded-md text-xs">UPDATE</button><button onclick="document.getElementById('pass-modal').style.display='none'" class="flex-1 bg-zinc-800 text-zinc-400 font-bold py-2 rounded-md text-xs">CANCEL</button></div></div>
       </div>
 
       <div class="max-w-[1050px] mx-auto text-center">
         <header class="py-12"><h1 class="text-6xl font-black italic text-yellow-500 uppercase tracking-tighter">Winner-Match Deno Dev</h1></header>
+        
+        <section class="mb-12 px-10 text-center">
+          <h2 class="text-2xl font-bold text-white mb-4 uppercase tracking-[0.2em]">Premium Football Intelligence</h2>
+          <p class="text-zinc-500 text-lg leading-relaxed italic max-w-3xl mx-auto">
+            Welcome to Winner-Match. Our expert analysis combines deep statistical data with professional market insights to deliver high-accuracy predictions. Elevate your winning game today.
+          </p>
+          <div class="mt-8 flex justify-center gap-6">
+              <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ 90% Accuracy</span>
+              <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ Expert Analysts</span>
+          </div>
+        </section>
+
         <div id="guest-ui">
           <div class="max-w-md mx-auto card-bg p-10 rounded-2xl shadow-2xl border-t-4 border-yellow-500 mb-20">
              <h2 class="text-2xl font-black mb-6 italic uppercase text-yellow-500">Member Login</h2>
              <input type="text" id="uName" class="stripe-input" placeholder="Username">
              <input type="password" id="uPass" class="stripe-input" placeholder="Password">
              <div class="flex items-center gap-2 mb-6 text-left"><input type="checkbox" id="rememberMe" class="w-4 h-4"><label for="rememberMe" class="text-zinc-500 text-[10px] font-bold uppercase">Remember Me</label></div>
-             <button onclick="doLogin()" class="btn-main uppercase tracking-widest">Login to Unlock</button>
+             <button onclick="doLogin()" class="btn-main uppercase tracking-widest">Login</button>
           </div>
           <div class="grid grid-cols-2 gap-10 mb-20 max-w-4xl mx-auto">
               <div class="card-bg rounded-2xl p-10 border-b-4 border-yellow-600 shadow-2xl transition hover:-translate-y-1"><h2 class="text-6xl font-black mb-4">$70</h2><p class="text-zinc-600 text-xs font-black uppercase tracking-widest italic">7 Tips Package</p></div>
@@ -82,7 +86,7 @@ serve(async (req) => {
               <button onclick="logout()" class="bg-zinc-800 px-6 py-2 rounded font-bold text-xs uppercase border border-zinc-700">Logout</button>
            </div>
         </div>
-        <div class="card-bg rounded-2xl overflow-hidden shadow-2xl"><table class="w-full border-collapse"><thead><tr class="gold-gradient text-black text-[11px] font-black uppercase"><th class="p-4 border-r border-black/10">Date</th><th class="p-4 border-r border-black/10">Match Details</th><th class="p-4 border-r border-black/10">Over Line</th><th class="p-4 border-r border-black/10 text-center">Score</th><th class="p-4">Status</th></tr></thead><tbody id="tips-table-body"></tbody></table></div>
+        <div class="card-bg rounded-2xl overflow-hidden shadow-2xl"><table class="w-full border-collapse"><thead><tr class="gold-gradient text-black text-[11px] font-black uppercase"><th class="p-4 border-r border-black/10">Date</th><th class="p-4 border-r border-black/10">Match Details</th><th class="p-4 border-r border-black/10">Over Line</th><th class="p-4 border-r border-black/10">Odds</th><th class="p-4 border-r border-black/10 text-center">Score</th><th class="p-4">Status</th></tr></thead><tbody id="tips-table-body"></tbody></table></div>
         <footer class="py-16 border-t border-zinc-900"><p class="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em]">&copy; 2025 WINNER-MATCH.DENO.DEV | ALL RIGHTS RESERVED</p></footer>
       </div>
 
@@ -93,17 +97,16 @@ serve(async (req) => {
         async function doLogin(){
           const u=document.getElementById('uName').value; const p=document.getElementById('uPass').value; const rem=document.getElementById('rememberMe').checked;
           const res=await fetch('/api/user-login',{method:'POST',body:JSON.stringify({user:u,pass:p})});
-          if(res.ok){ const d=await res.json(); d.remUntil=rem?Date.now()+(5*24*60*60*1000):null; localStorage.setItem('winner_user',JSON.stringify(d)); location.reload(); } else { showToast('Invalid Login!','error'); }
+          if(res.ok){ const d=await res.json(); d.remUntil=rem?Date.now()+(5*24*60*60*1000):null; localStorage.setItem('winner_user',JSON.stringify(d)); location.reload(); }
+          else { showToast('Invalid Login!','error'); }
         }
         function logout(){ localStorage.removeItem('winner_user'); location.reload(); }
-        
         async function submitPassChange() {
           const oldPass = document.getElementById('oldPass').value; const newPass = document.getElementById('newPass').value;
           const res = await fetch('/api/user-change-password', { method: 'POST', body: JSON.stringify({ user: userData.user, oldPass, newPass }) });
-          if(res.ok) { showToast('✅ Password Updated! Please Login again.', 'success'); setTimeout(()=>logout(), 2000); }
+          if(res.ok) { showToast('✅ Password Updated!', 'success'); setTimeout(()=>logout(), 1500); }
           else { showToast('❌ ' + await res.text(), 'error'); }
         }
-
         const userData=JSON.parse(localStorage.getItem('winner_user')); let isLoggedIn=false;
         if(userData){ if(userData.remUntil && Date.now()>userData.remUntil){ logout(); } else { isLoggedIn=true; document.getElementById('guest-ui').classList.add('hidden'); document.getElementById('dashboard-header').classList.remove('hidden'); document.getElementById('displayUser').innerText=userData.user; document.getElementById('displayCredits').innerText=userData.credits||0; } }
         async function fetchTips(){
@@ -112,7 +115,7 @@ serve(async (req) => {
             const isPending=t.status==='Pending'; const isUnlocked=unlocked.includes(t.id)||!isPending;
             let mTxt=isUnlocked?t.match:'<span class="text-yellow-600/70 tracking-widest font-black uppercase text-[10px]">Locked Info</span>';
             let tTxt=isUnlocked?('<span class="text-white font-bold">'+t.tip+'</span>'):(isLoggedIn?'<button onclick="unlockTip(\\''+t.id+'\\')" class="unlock-btn">UNLOCK TIP</button>':'<span class="text-yellow-400 font-bold uppercase tracking-tighter">Locked 🔒</span>');
-            return '<tr class="match-row"><td class="p-4 text-zinc-300 text-xs font-bold border-r border-white/5">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center">'+(t.result||'-:-')+'</td><td class="p-4 '+(t.status==='Win'?'win-effect':(t.status==='Lose'?'text-zinc-700':'text-sky-600'))+' italic text-3xl uppercase tracking-tighter">'+t.status+'</td></tr>';
+            return '<tr class="match-row"><td class="p-4 text-zinc-300 text-xs font-bold border-r border-white/5">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 text-zinc-500 font-mono border-r border-white/5">'+(isUnlocked?t.odds:'-')+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center">'+(t.result||'-:-')+'</td><td class="p-4 '+(t.status==='Win'?'win-effect':(t.status==='Lose'?'text-zinc-700':'text-sky-600'))+' italic text-3xl uppercase tracking-tighter">'+t.status+'</td></tr>';
           }).join('');
         }
         async function unlockTip(id){ askConfirm('Unlock for 1 credit?',async()=>{
@@ -123,11 +126,11 @@ serve(async (req) => {
       </script></body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 2. ADMIN PANEL (PASSWORD-FREE TOP-UP)
+  // 2. ADMIN PANEL (WITH EASY TOP-UP)
   if (url.pathname === "/admin" && req.method === "GET") {
     let adminUI = "";
     if (!storedPass) {
-       adminUI = '<div class="card-bg p-8 rounded-xl"><input type="password" id="newPass" class="stripe-input" placeholder="Setup Password"><button onclick="setPass()" class="btn-main">SETUP</button></div>' +
+       adminUI = '<div class="card-bg p-8 rounded-xl shadow-2xl"><input type="password" id="newPass" class="stripe-input" placeholder="Setup Password"><button onclick="setPass()" class="btn-main">SETUP</button></div>' +
                  '<script>async function setPass(){ const pass=document.getElementById("newPass").value; await fetch("/api/config",{method:"POST",body:JSON.stringify({pass})}); location.reload(); }</script>';
     } else {
        adminUI = `
@@ -138,16 +141,17 @@ serve(async (req) => {
         <div id="admin-dashboard" class="hidden">
           <div class="flex justify-between items-center mb-8 bg-zinc-900 p-4 rounded-lg"><span class="font-black text-yellow-500 uppercase text-[10px]">Session Active</span><button onclick="sessionStorage.removeItem('admin_key'); location.reload();" class="text-zinc-500 underline text-[10px]">Logout</button></div>
           <div class="card-bg p-8 rounded-2xl mb-12 shadow-2xl border-t-4 border-sky-500">
-            <h3 class="text-sky-500 font-black mb-4 uppercase text-xs">Member Manager (Credit Top-up)</h3>
-            <div class="grid grid-cols-2 gap-4"><input type="text" id="targetUser" placeholder="Username" class="stripe-input"><input type="number" id="targetCredits" placeholder="Credits to ADD" class="stripe-input"></div>
-            <input type="text" id="targetPass" placeholder="New Password (Optional if Existing)" class="stripe-input">
+            <h3 class="text-sky-500 font-black mb-4 uppercase text-xs">Credit Top-up</h3>
+            <div class="grid grid-cols-2 gap-4"><input type="text" id="targetUser" placeholder="User" class="stripe-input"><input type="number" id="targetCredits" placeholder="ADD Credits" class="stripe-input"></div>
+            <input type="text" id="targetPass" placeholder="User Pass (Empty to Keep)" class="stripe-input">
             <button onclick="saveUser()" class="bg-sky-600 w-full py-4 rounded font-bold text-xs uppercase tracking-widest">Update User / Add Credits</button>
           </div>
           <h3 class="text-zinc-500 font-black mb-4 uppercase text-[10px] tracking-widest">Active Credits</h3>
           <div id="user-list" class="space-y-2 mb-12"></div>
           <div class="card-bg p-8 rounded-2xl border-t-4 border-yellow-500 mb-10">
-            <input type="text" id="tipId" placeholder="ID (Auto for New)" class="stripe-input">
-            <input type="text" id="date" placeholder="Date" class="stripe-input"><input type="text" id="match" placeholder="Match Details" class="stripe-input"><input type="text" id="tip" placeholder="Over Line" class="stripe-input">
+            <input type="text" id="tipId" placeholder="ID (Persistent for Credit)" class="stripe-input">
+            <input type="text" id="date" placeholder="Date" class="stripe-input"><input type="text" id="match" placeholder="Match Details" class="stripe-input">
+            <input type="text" id="tip" placeholder="Over Line" class="stripe-input">
             <div class="grid grid-cols-2 gap-4"><input type="text" id="odds" placeholder="Odds" class="stripe-input"><input type="text" id="result" placeholder="Score" class="stripe-input"></div>
             <select id="status" class="stripe-input !bg-zinc-900"><option value="Pending">Pending</option><option value="Win">Win</option><option value="Lose">Lose</option></select>
             <button onclick="saveTip()" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase">SAVE TIP</button>
@@ -157,7 +161,7 @@ serve(async (req) => {
         <script>
           const adminSessionKey = sessionStorage.getItem('admin_key');
           if(adminSessionKey) { document.getElementById('admin-login-box').classList.add('hidden'); document.getElementById('admin-dashboard').classList.remove('hidden'); loadAdminData(); }
-          async function adminLogin() { const p = document.getElementById('adminPassInput').value; const r = await fetch('/api/admin-verify', { method: 'POST', body: JSON.stringify({ pass: p }) }); if(r.ok) { sessionStorage.setItem('admin_key', p); location.reload(); } else { alert('Wrong Admin Key!'); } }
+          async function adminLogin() { const p = document.getElementById('adminPassInput').value; const r = await fetch('/api/admin-verify', { method: 'POST', body: JSON.stringify({ pass: p }) }); if(r.ok) { sessionStorage.setItem('admin_key', p); location.reload(); } else { alert('Error!'); } }
           async function saveUser() { const d = { adminKey: adminSessionKey, user: document.getElementById('targetUser').value, pass: document.getElementById('targetPass').value, credits: parseInt(document.getElementById('targetCredits').value || 0) }; const r = await fetch('/api/create-user', { method: 'POST', body: JSON.stringify(d) }); if(r.ok) location.reload(); else alert('Error!'); }
           async function saveTip() { const d = { password: adminSessionKey, id: document.getElementById('tipId').value, date: document.getElementById('date').value, match: document.getElementById('match').value, tip: document.getElementById('tip').value, odds: document.getElementById('odds').value, result: document.getElementById('result').value, status: document.getElementById('status').value }; const r = await fetch('/api/tips', { method: 'POST', body: JSON.stringify(d) }); if(r.ok) location.reload(); else alert('Error!'); }
           async function loadAdminData() {
@@ -175,20 +179,17 @@ serve(async (req) => {
 
   // --- API HANDLERS ---
   if (url.pathname === "/api/user-change-password" && req.method === "POST") {
-    const { user, oldPass, newPass } = await req.json();
-    const entry = await kv.get(["users", user]);
-    if (!entry.value || entry.value.pass !== oldPass) return new Response("Current Password Incorrect!", { status: 401 });
-    await kv.set(["users", user], { ...entry.value, pass: newPass }); return new Response("OK");
+    const { user, oldPass, newPass } = await req.json(); const e = await kv.get(["users", user]);
+    if (!e.value || e.value.pass !== oldPass) return new Response("Old Password Wrong!", { status: 401 });
+    await kv.set(["users", user], { ...e.value, pass: newPass }); return new Response("OK");
   }
   if (url.pathname === "/api/create-user" && req.method === "POST") {
     const { adminKey, user, pass, credits } = await req.json(); if (adminKey !== storedPass) return new Response("Error", { status: 401 });
-    const existing = await kv.get(["users", user]); const oldData = existing.value || { credits: 0, unlockedTips: [] };
-    // Password အကွက်အလွတ်ထားရင် အဟောင်းအတိုင်းထားမယ်
-    const updatedPass = pass || oldData.pass;
-    await kv.set(["users", user], { ...oldData, user, pass: updatedPass, credits: (oldData.credits || 0) + (credits || 0) });
+    const ex = await kv.get(["users", user]); const old = ex.value || { credits: 0, unlockedTips: [] };
+    const finalPass = pass || old.pass; // Password မရိုက်ရင် အရင်ဟာအတိုင်းထားမယ်
+    await kv.set(["users", user], { ...old, user, pass: finalPass, credits: (old.credits || 0) + (credits || 0) });
     return new Response("OK");
   }
-  // (Verify, Unlock, Tips, User List handlers remain same)
   if (url.pathname === "/api/admin-verify" && req.method === "POST") {
     const { pass } = await req.json(); return pass === storedPass ? new Response("OK") : new Response("Error", { status: 401 });
   }
@@ -196,6 +197,7 @@ serve(async (req) => {
     const { user, pass, tipId } = await req.json(); const uEntry = await kv.get(["users", user]);
     if (!uEntry.value || uEntry.value.pass !== pass) return new Response("Error", { status: 401 });
     const u = uEntry.value; if ((u.credits || 0) <= 0) return new Response("No Credits!", { status: 400 });
+    if (u.unlockedTips && u.unlockedTips.includes(tipId)) return new Response(JSON.stringify(u));
     const updated = { ...u, credits: u.credits - 1, unlockedTips: [...(u.unlockedTips || []), tipId] };
     await kv.set(["users", user], updated); return new Response(JSON.stringify(updated));
   }
