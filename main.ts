@@ -7,7 +7,6 @@ async function getStoredPassword() {
   return entry.value as string | null;
 }
 
-// --- CSS with Win Effects & Large Fonts ---
 const UI_CSS = `
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -29,45 +28,55 @@ serve(async (req) => {
   const url = new URL(req.url);
   const storedPass = await getStoredPassword();
 
-  // 1. PUBLIC HOME PAGE
+  // 1. PUBLIC HOME PAGE (Hidden Admin Login)
   if (url.pathname === "/" && req.method === "GET") {
     return new Response(`<html><head>${UI_CSS}</head><body class="p-4 max-w-4xl mx-auto">
-      <header class="flex justify-between items-center py-6 border-b border-zinc-800 mb-8">
-        <h1 class="text-2xl font-bold italic text-yellow-500">BESTSOCCERTIPS</h1>
-        <a href="/admin" class="bg-zinc-800 px-5 py-2 rounded-lg text-sm font-bold text-zinc-500 tracking-tighter">ADMIN LOGIN</a>
+      <header class="flex justify-center items-center py-10">
+        <h1 class="text-4xl font-black italic text-yellow-500 tracking-tighter">BESTSOCCERTIPS</h1>
       </header>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div class="card-bg rounded-xl p-8 text-center shadow-2xl">
-              <div class="gold-gradient text-black font-black py-2 rounded-t-lg mb-6 text-xl">3 NORMAL TIPS</div>
-              <h2 class="text-5xl font-black mb-6">55$</h2>
-              <button class="bg-sky-500 w-full py-4 rounded-full font-black text-xl btn-action">BUY NOW</button>
+      <section class="text-center mb-12 px-2">
+        <h2 class="text-xl font-bold text-white mb-4 uppercase tracking-widest">Premium Football Intelligence</h2>
+        <p class="text-zinc-400 text-lg leading-relaxed max-w-2xl mx-auto">
+          Welcome to <span class="text-yellow-500 font-bold">BESTSOCCERTIPS</span>. Our expert analysis combines deep statistical data with professional market insights to deliver high-accuracy predictions. We focus on long-term profitability and consistent winning rates. Trust the experts, follow the data, and elevate your winning game today.
+        </p>
+        <div class="mt-6 flex justify-center gap-4">
+            <span class="bg-zinc-900 border border-zinc-700 px-4 py-1 rounded-full text-xs font-bold text-yellow-500">✓ 90% ACCURACY</span>
+            <span class="bg-zinc-900 border border-zinc-700 px-4 py-1 rounded-full text-xs font-bold text-yellow-500">✓ EXPERT ANALYSTS</span>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+          <div class="card-bg rounded-2xl p-8 text-center shadow-2xl">
+              <div class="gold-gradient text-black font-black py-2 rounded-t-lg mb-6 text-xl uppercase">Normal Tips Plan</div>
+              <h2 class="text-6xl font-black mb-6">55$ <span class="text-sm text-zinc-600">/3 TIPS</span></h2>
+              <button class="bg-sky-500 w-full py-5 rounded-full font-black text-xl btn-action uppercase">Activate Now</button>
           </div>
-          <div class="card-bg rounded-xl p-8 text-center border border-yellow-500/20">
-              <div class="gold-gradient text-black font-black py-2 rounded-t-lg mb-6 text-xl">1 VIP TIP</div>
-              <h2 class="text-5xl font-black mb-6">650$</h2>
-              <button class="bg-sky-500 w-full py-4 rounded-full font-black text-xl btn-action">BUY NOW</button>
+          <div class="card-bg rounded-2xl p-8 text-center border border-yellow-500/10">
+              <div class="gold-gradient text-black font-black py-2 rounded-t-lg mb-6 text-xl uppercase">VIP Confidence Tip</div>
+              <h2 class="text-6xl font-black mb-6">650$ <span class="text-sm text-zinc-600">/1 TIP</span></h2>
+              <button class="bg-sky-500 w-full py-5 rounded-full font-black text-xl btn-action uppercase">Join VIP Group</button>
           </div>
       </div>
 
-      <h3 class="text-yellow-500 font-black mb-6 text-lg tracking-widest uppercase">Latest Premium Tips</h3>
+      <h3 class="text-yellow-500 font-black mb-6 text-lg tracking-widest uppercase border-l-4 border-yellow-500 pl-4">Latest Verified Results</h3>
       <div id="tips-list" class="space-y-4"></div>
 
       <script>
         fetch('/api/tips').then(res => res.json()).then(data => {
           document.getElementById('tips-list').innerHTML = data.map(t => \`
-            <div class="card-bg p-5 rounded-xl flex justify-between items-center shadow-lg border-l-4 \${t.status === 'Win' ? 'border-red-500' : 'border-zinc-800'}">
+            <div class="card-bg p-6 rounded-2xl flex justify-between items-center shadow-lg border-b border-zinc-800">
               <div class="flex-1">
-                <div class="text-sm text-zinc-500 font-bold">\${t.date} | \${t.league}</div>
+                <div class="text-xs text-zinc-500 font-bold uppercase mb-1">\${t.date} | \${t.league}</div>
                 <div class="text-2xl font-black text-yellow-500">\${t.match}</div>
-                <div class="text-lg mt-1">Tip: <span class="text-white font-bold">\${t.tip}</span> | Odds: \${t.odds}</div>
+                <div class="text-lg mt-1">Prediction: <span class="text-white font-bold">\${t.tip}</span> | <span class="text-zinc-400">Odds: \${t.odds}</span></div>
               </div>
-              <div class="text-center px-4">
-                 <div class="text-2xl font-black text-zinc-400">\${t.result || '-:-'}</div>
-                 <div class="text-xs uppercase text-zinc-600 font-bold">Result</div>
+              <div class="text-center px-6">
+                 <div class="text-3xl font-black text-zinc-300">\${t.result || '-:-'}</div>
+                 <div class="text-[10px] uppercase text-zinc-600 font-black tracking-widest">Final Score</div>
               </div>
               <div class="text-right w-24">
-                <div class="\${t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-600' : 'text-sky-500')} font-black text-3xl italic">
+                <div class="\${t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-600' : 'text-sky-500')} font-black text-3xl italic uppercase">
                   \${t.status}
                 </div>
               </div>
@@ -75,16 +84,19 @@ serve(async (req) => {
           \`).join('');
         });
       </script>
+      <footer class="mt-20 py-10 border-t border-zinc-900 text-center text-zinc-700 text-xs font-bold uppercase tracking-widest">
+        &copy; 2025 BestSoccerTips - All Rights Reserved
+      </footer>
     </body></html>`, { headers: { "Content-Type": "text/html" } });
   }
 
-  // 2. ADMIN PANEL (WITH RESULT & DELETE)
+  // 2. ADMIN PANEL (Hidden Route)
   if (url.pathname === "/admin" && req.method === "GET") {
     if (!storedPass) {
        return new Response(`<html><head>${UI_CSS}</head><body class="p-6 max-w-md mx-auto">
-        <h2 class="text-3xl font-black text-yellow-500 mb-6">Setup Password</h2>
-        <input type="password" id="newPass" placeholder="Admin Password">
-        <button onclick="setPass()" class="bg-yellow-600 w-full py-4 rounded-lg font-black">SET PASSWORD</button>
+        <h2 class="text-3xl font-black text-yellow-500 mb-6">Setup Security</h2>
+        <input type="password" id="newPass" placeholder="New Secret Password">
+        <button onclick="setPass()" class="bg-yellow-600 w-full py-4 rounded-lg font-black">SAVE PASSWORD</button>
         <script>
           async function setPass() {
             const pass = document.getElementById('newPass').value;
@@ -96,45 +108,48 @@ serve(async (req) => {
     }
 
     return new Response(`<html><head>${UI_CSS}</head><body class="p-4 max-w-2xl mx-auto">
-        <h2 class="text-3xl font-black text-yellow-500 mb-8">Admin Dashboard</h2>
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-black text-yellow-500">Secret Admin</h2>
+            <a href="/" class="text-xs text-zinc-500 font-bold underline">Preview Site</a>
+        </div>
         
-        <div class="card-bg p-6 rounded-xl mb-10 shadow-2xl">
+        <div class="card-bg p-8 rounded-2xl mb-12 shadow-2xl">
           <input type="hidden" id="tipId">
-          <input type="password" id="pass" placeholder="Admin Password" class="mb-4">
-          <div class="grid grid-cols-2 gap-3">
+          <input type="password" id="pass" placeholder="Secret Key" class="mb-4">
+          <div class="grid grid-cols-2 gap-4">
             <input type="text" id="date" placeholder="Date (19/12 20:00)">
-            <input type="text" id="league" placeholder="League (FRAC)">
+            <input type="text" id="league" placeholder="League (ENG PR)">
           </div>
-          <input type="text" id="match" placeholder="Match (Team A - Team B)">
-          <input type="text" id="tip" placeholder="Tip (Over 2.5)">
-          <div class="grid grid-cols-2 gap-3">
-            <input type="text" id="odds" placeholder="Odds (0.95)">
-            <input type="text" id="result" placeholder="Result (e.g. 2:1)">
+          <input type="text" id="match" placeholder="Home Team - Away Team">
+          <input type="text" id="tip" placeholder="Your Tip (e.g. Over 3.5)">
+          <div class="grid grid-cols-2 gap-4">
+            <input type="text" id="odds" placeholder="Odds (1.05)">
+            <input type="text" id="result" placeholder="Result (2:1)">
           </div>
           <select id="status">
             <option value="Pending">Pending</option>
             <option value="Win">Win</option>
             <option value="Lose">Lose</option>
           </select>
-          <button id="saveBtn" class="bg-yellow-600 w-full py-4 rounded-lg font-black text-xl btn-action">SAVE / UPDATE DATA</button>
-          <button onclick="location.reload()" class="w-full text-zinc-500 mt-4 text-sm font-bold">CLEAR FORM</button>
+          <button id="saveBtn" class="bg-yellow-600 w-full py-5 rounded-xl font-black text-xl btn-action">SAVE DATA</button>
+          <button onclick="location.reload()" class="w-full text-zinc-600 mt-4 text-xs font-bold uppercase">Clear Form</button>
         </div>
 
-        <h3 class="text-zinc-500 font-bold mb-4 uppercase text-xs tracking-widest">Manage All Tips</h3>
+        <h3 class="text-zinc-600 font-black mb-4 uppercase text-xs tracking-widest">Entry History</h3>
         <div id="admin-tips-list" class="space-y-3"></div>
 
         <script>
           const loadAdminTips = () => {
             fetch('/api/tips').then(res => res.json()).then(data => {
               document.getElementById('admin-tips-list').innerHTML = data.map(t => \`
-                <div class="card-bg p-4 rounded-lg flex justify-between items-center">
+                <div class="card-bg p-4 rounded-xl flex justify-between items-center">
                   <div>
                     <div class="font-bold text-yellow-500 text-lg">\${t.match}</div>
-                    <div class="text-zinc-500 text-xs font-bold">\${t.date} | \${t.result || '-:-'} | \${t.status}</div>
+                    <div class="text-zinc-600 text-[10px] font-black uppercase">\${t.date} | \${t.result || '-:-'} | \${t.status}</div>
                   </div>
                   <div class="flex gap-2">
-                    <button onclick='editTip(\${JSON.stringify(t)})' class="bg-zinc-800 px-4 py-2 rounded font-black text-sky-400 text-xs btn-action">EDIT</button>
-                    <button onclick='deleteTip("\${t.id}")' class="bg-red-900/30 px-4 py-2 rounded font-black text-red-500 text-xs btn-action">DEL</button>
+                    <button onclick='editTip(\${JSON.stringify(t)})' class="bg-zinc-800 px-4 py-2 rounded font-black text-sky-400 text-xs btn-action uppercase">Edit</button>
+                    <button onclick='deleteTip("\${t.id}")' class="bg-red-900/20 px-4 py-2 rounded font-black text-red-500 text-xs btn-action uppercase">Del</button>
                   </div>
                 </div>
               \`).join('');
@@ -155,14 +170,14 @@ serve(async (req) => {
 
           window.deleteTip = async (id) => {
             const pass = document.getElementById('pass').value;
-            if(!pass) return alert('Please enter password first!');
-            if(!confirm('Are you sure?')) return;
+            if(!pass) return alert('Enter Secret Key!');
+            if(!confirm('Delete this?')) return;
             const res = await fetch('/api/tips/' + id, { 
               method: 'DELETE',
               headers: { 'Authorization': pass }
             });
             if(res.ok) location.reload();
-            else alert('❌ Error/Wrong Password');
+            else alert('Error!');
           };
 
           document.getElementById('saveBtn').onclick = async () => {
@@ -178,8 +193,8 @@ serve(async (req) => {
               status: document.getElementById('status').value
             };
             const res = await fetch('/api/tips', { method: 'POST', body: JSON.stringify(data) });
-            if(res.ok) { alert('✅ Updated!'); location.reload(); }
-            else { alert('❌ Wrong Password!'); }
+            if(res.ok) { alert('Success!'); location.reload(); }
+            else { alert('Wrong Key!'); }
           };
           loadAdminTips();
         </script>
