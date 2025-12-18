@@ -154,7 +154,7 @@ serve(async (req) => {
         const expiry = document.getElementById('expiry');
 
         // Global Countries List
-        const countries = ["United States", "United Kingdom", "Chinese", "Seychelles", "Singapore", "Thailand", "Germany", "France", "Korea", "Japan", "Others..."];
+        const countries = ["United States", "United Kingdom", "Myanmar", "Seychelles", "Singapore", "Thailand", "Germany", "France", "Japan", "Others..."];
         document.getElementById('country').innerHTML = countries.map(c => \`<option value="\${c}">\${c}</option>\`).join('');
 
         // Dynamic Card Icon Change
