@@ -113,7 +113,9 @@ serve(async (req) => {
             const isPending=t.status==='Pending'; const isUnlocked=unlocked.includes(t.id)||!isPending;
             let mTxt=isUnlocked?t.match:'<span class="text-yellow-600/70 tracking-widest font-black uppercase text-[10px]">Locked Info</span>';
             let tTxt=isUnlocked?('<span class="text-white font-bold">'+t.tip+'</span>'):(isLoggedIn?'<button onclick="unlockTip(\\''+t.id+'\\')" class="unlock-btn">UNLOCK TIP</button>':'<span class="text-yellow-400 font-bold uppercase tracking-tighter">Locked 🔒</span>');
-            return '<tr class="match-row"><td class="p-4 text-zinc-300 text-xs font-bold border-r border-white/5">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 text-zinc-500 font-mono border-r border-white/5">'+(isUnlocked?t.odds:'-')+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center">'+(t.result||'-:-')+'</td><td class="p-4 '+(t.status==='Win'?'win-effect':(t.status==='Lose'?'text-zinc-700':'text-sky-600'))+' italic text-3xl uppercase tracking-tighter">'+t.status+'</td></tr>';
+            // Status Styling including DRAW
+            let statusClass = t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-700' : (t.status === 'Draw' ? 'text-zinc-400' : 'text-sky-600'));
+            return '<tr class="match-row"><td class="p-4 text-zinc-300 text-xs font-bold border-r border-white/5">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 text-zinc-500 font-mono border-r border-white/5">'+(isUnlocked?t.odds:'-')+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center">'+(t.result||'-:-')+'</td><td class="p-4 '+statusClass+' italic text-3xl uppercase tracking-tighter">'+t.status+'</td></tr>';
           }).join('');
         }
         async function unlockTip(id){ askConfirm('Unlock for 1 credit?',async()=>{
@@ -124,7 +126,7 @@ serve(async (req) => {
       </script></body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 2. ADMIN PANEL (WITH UNLOCK HISTORY & TIME LOCK)
+  // 2. ADMIN PANEL (WITH DRAW OPTION)
   if (url.pathname === "/admin" && req.method === "GET") {
     let adminUI = "";
     if (!storedPass) {
@@ -154,13 +156,10 @@ serve(async (req) => {
           <div class="card-bg p-8 rounded-2xl border-t-4 border-yellow-500 mb-10">
             <h3 class="text-yellow-500 font-black mb-4 uppercase text-xs">Post Tip with Time Lock</h3>
             <input type="text" id="tipId" placeholder="ID (Auto for New)" class="stripe-input">
-            <div class="grid grid-cols-2 gap-4">
-               <input type="text" id="date" placeholder="Date (19/12)" class="stripe-input">
-               <input type="time" id="lockTime" class="stripe-input"> </div>
-            <input type="text" id="match" placeholder="Match Details" class="stripe-input">
-            <input type="text" id="tip" placeholder="Over Line" class="stripe-input">
+            <div class="grid grid-cols-2 gap-4"><input type="text" id="date" placeholder="Date (19/12)" class="stripe-input"><input type="time" id="lockTime" class="stripe-input"></div>
+            <input type="text" id="match" placeholder="Match Details" class="stripe-input"><input type="text" id="tip" placeholder="Over Line" class="stripe-input">
             <div class="grid grid-cols-2 gap-4"><input type="text" id="odds" placeholder="Odds" class="stripe-input"><input type="text" id="result" placeholder="Score" class="stripe-input"></div>
-            <select id="status" class="stripe-input !bg-zinc-900"><option value="Pending">Pending</option><option value="Win">Win</option><option value="Lose">Lose</option></select>
+            <select id="status" class="stripe-input !bg-zinc-900"><option value="Pending">Pending</option><option value="Win">Win</option><option value="Draw">Draw</option><option value="Lose">Lose</option></select>
             <button onclick="saveTip()" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase">SAVE TIP</button>
           </div>
           <div id="admin-tips" class="space-y-2"></div>
@@ -176,7 +175,7 @@ serve(async (req) => {
             document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600"><div><span class="font-bold text-white">'+x.user+'</span><span class="ml-4 bg-sky-900/50 text-sky-400 px-3 py-0.5 rounded-full font-black">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline uppercase">Del</button></div>').join('');
             const r2 = await fetch('/api/tips?admin=true'); const t = await r2.json();
             document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50"><span>['+y.date+'] '+y.match+'</span><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline font-bold uppercase">Edit</button></div>').join('');
-            const r3 = await fetch('/api/admin-history'); const h = await r3.json(); // History Fetch
+            const r3 = await fetch('/api/admin-history'); const h = await r3.json();
             document.getElementById('history-list').innerHTML = h.map(i => '<div class="bg-zinc-900/30 p-2 border-b border-zinc-800 text-[10px]"><span class="text-sky-400 font-bold">'+i.user+'</span> unlocked <span class="text-yellow-500">'+i.match+'</span> <span class="text-zinc-600 italic">('+i.time+')</span></div>').join('');
           }
           window.deleteU = async (u) => { if(!confirm('Delete?')) return; await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, user: u }) }); location.reload(); };
@@ -191,21 +190,11 @@ serve(async (req) => {
     const { user, pass, tipId } = await req.json(); const uE = await kv.get(["users", user]); const tE = await kv.get(["tips", tipId]);
     if (!uE.value || uE.value.pass !== pass) return new Response("Error", { status: 401 });
     const tip = tE.value;
-    
-    // Time-Lock Logic (Myanmar Time Comparison)
-    if (tip.lockTime) {
-      const now = new Date();
-      const [h, m] = tip.lockTime.split(':');
-      const lockDate = new Date(); lockDate.setHours(parseInt(h), parseInt(m), 0);
-      if (now.getTime() > lockDate.getTime()) return new Response("Time Expired! This match is closed.", { status: 400 });
-    }
-
+    if (tip.lockTime) { const now = new Date(); const [h, m] = tip.lockTime.split(':'); const lockDate = new Date(); lockDate.setHours(parseInt(h), parseInt(m), 0); if (now.getTime() > lockDate.getTime()) return new Response("Time Expired! This match is closed.", { status: 400 }); }
     const u = uE.value; if ((u.credits || 0) <= 0) return new Response("Insufficient Credits!", { status: 400 });
     if (u.unlockedTips?.includes(tipId)) return new Response(JSON.stringify(u));
-    
     const updated = { ...u, credits: u.credits - 1, unlockedTips: [...(u.unlockedTips || []), tipId] };
     await kv.set(["users", user], updated);
-    // Add to Global History
     await kv.set(["history", Date.now().toString()], { user, match: tip.match, time: new Date().toLocaleTimeString('en-GB') });
     return new Response(JSON.stringify(updated));
   }
