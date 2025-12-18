@@ -27,8 +27,6 @@ const UI_HEAD = `
     .page-btn { background: #222; color: #888; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .page-btn.active { background: #f3ca52; color: #000; }
     .vip-badge { background: #f3ca52; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; vertical-align: middle; margin-left: 5px; }
-    
-    /* Stripe Checkout Styling */
     .stripe-input { width: 100%; padding: 12px; border: 1px solid #e6ebf1; border-radius: 5px; color: #32325d; font-size: 16px; margin-bottom: 15px; outline: none; }
     .spinner { border: 4px solid rgba(0,0,0,0.1); border-top: 4px solid #3182ce; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -89,23 +87,23 @@ serve(async (req) => {
         <script>
           let currentPage = 1; const limit = 15;
           async function fetchTips(page = 1) {
-            const res = await fetch(\`/api/tips?page=\${page}&limit=\${limit}\`);
+            const res = await fetch('/api/tips?page=' + page + '&limit=' + limit);
             const { data, totalPages } = await res.json();
             document.getElementById('tips-table-body').innerHTML = data.map(t => {
               const statusClass = t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-700' : 'text-sky-600');
               const rowClass = t.status === 'Win' ? 'match-row win-row' : 'match-row';
-              return \`
-                <tr class="\${rowClass}">
-                  <td class="p-4 text-zinc-500 text-xs font-bold border-r border-white/5">\${t.date}</td>
-                  <td class="p-4 text-zinc-400 font-black uppercase text-[10px] border-r border-white/5">\${t.league}</td>
-                  <td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">\${t.match} \${t.isVip ? '<span class="vip-badge">VIP</span>' : ''}</td>
-                  <td class="p-4 font-bold text-zinc-200 border-r border-white/5">\${t.tip}</td>
-                  <td class="p-4 text-zinc-500 font-mono border-r border-white/5">\${t.odds}</td>
-                  <td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5">\${t.result || '-:-'}</td>
-                  <td class="p-4 \${statusClass} italic text-3xl uppercase tracking-tighter">\${t.status}</td>
-                </tr>\`;
+              const vipBadge = t.isVip ? '<span class="vip-badge">VIP</span>' : '';
+              return '<tr class="' + rowClass + '">' +
+                '<td class="p-4 text-zinc-500 text-xs font-bold border-r border-white/5">' + t.date + '</td>' +
+                '<td class="p-4 text-zinc-400 font-black uppercase text-[10px] border-r border-white/5">' + t.league + '</td>' +
+                '<td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">' + t.match + ' ' + vipBadge + '</td>' +
+                '<td class="p-4 font-bold text-zinc-200 border-r border-white/5">' + t.tip + '</td>' +
+                '<td class="p-4 text-zinc-500 font-mono border-r border-white/5">' + t.odds + '</td>' +
+                '<td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5">' + (t.result || '-:-') + '</td>' +
+                '<td class="p-4 ' + statusClass + ' italic text-3xl uppercase tracking-tighter">' + t.status + '</td>' +
+                '</tr>';
             }).join('');
-            let pgHtml = ''; for(let i=1; i<=totalPages; i++) pgHtml += \`<button onclick="changePage(\${i})" class="page-btn \${i === page ? 'active' : ''}">\${i}</button>\`;
+            let pgHtml = ''; for(let i=1; i<=totalPages; i++) pgHtml += '<button onclick="changePage(' + i + ')" class="page-btn ' + (i === page ? 'active' : '') + '">' + i + '</button>';
             document.getElementById('pagination').innerHTML = pgHtml;
           }
           window.changePage = (p) => { currentPage = p; fetchTips(p); window.scrollTo({ top: 600, behavior: 'smooth' }); }
@@ -114,13 +112,16 @@ serve(async (req) => {
       </body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 2. CHECKOUT PAGE (DYNAMIC ICONS & ANIMATIONS)
+  // 2. CHECKOUT PAGE
   if (url.pathname === "/checkout" && req.method === "GET") {
     const plan = url.searchParams.get("plan") || "Standard";
+    const price = plan === "VIP" ? "650.00" : "55.00";
     return new Response(`<!DOCTYPE html><html><head>${UI_HEAD}</head><body class="bg-[#f6f9fc] text-[#32325d] flex items-center justify-center min-h-screen p-4">
       <div class="bg-white p-8 rounded-xl shadow-2xl max-w-[450px] w-full" id="paymentBox">
-        <h1 class="text-3xl font-bold mb-8 italic">Add payment method</h1>
+        <h1 class="text-3xl font-bold mb-8 italic text-[#32325d]">Add payment method</h1>
         <form id="payForm">
+          <label class="block text-gray-500 font-medium mb-2 text-sm uppercase">Email address</label>
+          <input type="email" class="stripe-input" placeholder="email@example.com" required>
           <label class="block text-gray-500 font-medium mb-2 text-sm uppercase">Card information</label>
           <div class="relative mb-4">
             <input type="text" id="cardNum" class="stripe-input !mb-0" placeholder="1234 1234 1234 1234" maxlength="19" required>
@@ -129,7 +130,7 @@ serve(async (req) => {
           <div class="flex gap-4"><input type="text" id="expiry" class="stripe-input" placeholder="MM / YY" maxlength="7" required><input type="text" class="stripe-input" placeholder="CVC" maxlength="3" required></div>
           <label class="block text-gray-500 font-medium mb-2 text-sm uppercase">Country</label>
           <select id="country" class="stripe-input"></select>
-          <button type="submit" id="payBtn" class="bg-[#c1e1a6] text-[#445633] w-full py-4 rounded font-black text-lg mt-4 uppercase tracking-widest">Pay Now</button>
+          <button type="submit" id="payBtn" class="bg-[#c1e1a6] text-[#445633] w-full py-4 rounded font-black text-lg mt-4 uppercase tracking-widest">Pay $${price}</button>
         </form>
       </div>
 
@@ -137,27 +138,25 @@ serve(async (req) => {
           <div id="spinner" class="spinner border-blue-600 border-t-blue-100 !w-16 !h-16 !border-8"></div>
           <div id="successAnim" class="hidden text-center">
               <div class="success-icon">&check;</div>
-              <h2 class="text-3xl font-bold mb-2">Payment Successful!</h2>
-              <p class="text-gray-500 italic">Redirecting back to Winner Soccer...</p>
+              <h2 class="text-3xl font-bold mb-2 text-[#32325d]">Payment Successful!</h2>
+              <p class="text-gray-500 italic">Redirecting to Winner Soccer...</p>
           </div>
           <div id="errorMsg" class="hidden text-center text-red-600 font-bold p-6">
               <div class="text-5xl mb-4">❌</div>
               <h2 class="text-2xl mb-2 italic">Transaction Declined</h2>
-              <p class="mb-6 font-medium">Please check your card details and try again.</p>
+              <p class="mb-6 font-medium text-gray-500">Please check your card details and try again.</p>
               <button onclick="location.reload()" class="bg-gray-100 px-8 py-2 rounded text-black font-black uppercase text-sm">Retry</button>
           </div>
       </div>
 
       <script>
+        const countries = ["United States", "United Kingdom", "Myanmar", "Seychelles", "Singapore", "Thailand", "Germany", "France", "Japan", "Others..."];
+        document.getElementById('country').innerHTML = countries.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+
         const cardNum = document.getElementById('cardNum');
         const cardIcon = document.getElementById('cardIcon');
         const expiry = document.getElementById('expiry');
 
-        // Global Countries List
-        const countries = ["United States", "United Kingdom", "Myanmar", "Seychelles", "Singapore", "Thailand", "Germany", "France", "Japan", "Others..."];
-        document.getElementById('country').innerHTML = countries.map(c => \`<option value="\${c}">\${c}</option>\`).join('');
-
-        // Dynamic Card Icon Change
         cardNum.addEventListener('input', (e) => {
           let v = e.target.value.replace(/\\D/g, '');
           e.target.value = v.replace(/(.{4})/g, '$1 ').trim();
@@ -167,14 +166,13 @@ serve(async (req) => {
           else { cardIcon.innerText = "CARD"; cardIcon.className = "absolute right-3 top-3 bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-black"; }
         });
 
-        // Auto-slash for Expiry
         expiry.addEventListener('input', (e) => {
           let v = e.target.value.replace(/\\D/g, '');
           if(v.length > 2) v = v.substring(0,2) + ' / ' + v.substring(2,4);
           e.target.value = v;
         });
 
-        document.getElementById('payForm').onsubmit = async (e) => {
+        document.getElementById('payForm').onsubmit = (e) => {
           e.preventDefault();
           document.getElementById('overlay').classList.remove('hidden');
           setTimeout(() => {
@@ -190,12 +188,14 @@ serve(async (req) => {
       </script></body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 3. ADMIN PANEL (HIDDEN)
+  // 3. ADMIN PANEL
   if (url.pathname === "/admin" && req.method === "GET") {
-    const adminHtml = `<!DOCTYPE html><html><head>${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto">
-      <h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase">Admin Dashboard</h2>
-      ${!storedPass ? \`<div class="card-bg p-8 rounded-xl shadow-2xl"><input type="password" id="newPass" placeholder="Set Password" class="bg-zinc-900 border border-zinc-700 p-4 w-full rounded mb-4 text-white"><button onclick="setPass()" class="bg-yellow-600 w-full py-4 font-black rounded-lg">SAVE PASSWORD</button></div><script>async function setPass(){ const pass=document.getElementById('newPass').value; await fetch('/api/config',{method:'POST',body:JSON.stringify({pass})}); location.reload(); }</script>\` : \`
-        <div class="card-bg p-8 rounded-2xl mb-12 shadow-2xl border-t-4 border-yellow-500">
+    let adminContent = "";
+    if (!storedPass) {
+      adminContent = `<div class="card-bg p-8 rounded-xl shadow-2xl"><input type="password" id="newPass" placeholder="Set Password" class="bg-zinc-900 border border-zinc-700 p-4 w-full rounded mb-4 text-white"><button onclick="setPass()" class="bg-yellow-600 w-full py-4 font-black rounded-lg">SAVE PASSWORD</button></div>
+          <script>async function setPass(){ const pass=document.getElementById('newPass').value; await fetch('/api/config',{method:'POST',body:JSON.stringify({pass})}); location.reload(); }</script>`;
+    } else {
+      adminContent = `<div class="card-bg p-8 rounded-2xl mb-12 shadow-2xl border-t-4 border-yellow-500">
           <input type="hidden" id="tipId"><input type="password" id="pass" placeholder="Secret Key" class="bg-zinc-900 p-4 w-full rounded mb-6 text-white font-bold">
           <div class="grid grid-cols-2 gap-4 mb-4"><input type="text" id="date" placeholder="19/12 20:00" class="bg-zinc-900 p-4 rounded text-white"><input type="text" id="league" placeholder="ENG PR" class="bg-zinc-900 p-4 rounded text-white"></div>
           <input type="text" id="match" placeholder="Home - Away" class="bg-zinc-900 p-4 w-full rounded mb-4 text-white">
@@ -207,24 +207,26 @@ serve(async (req) => {
         </div>
         <div id="admin-list" class="space-y-3"></div>
         <script>
-          async function loadAdmin(){ const res=await fetch('/api/tips?admin=true'); const {data}=await res.json(); document.getElementById('admin-list').innerHTML=data.map(t=> \`<div class="card-bg p-4 flex justify-between items-center text-xs"><span class="font-bold text-yellow-500">\${t.match} (\${t.status})</span><div class="flex gap-4"><button onclick='editTip(\${JSON.stringify(t)})' class="text-sky-400 font-bold underline">EDIT</button><button onclick='deleteTip("\${t.id}")' class="text-red-500 font-bold underline">DEL</button></div></div>\`).join(''); }
+          async function loadAdmin(){ const res=await fetch('/api/tips?admin=true'); const {data}=await res.json(); document.getElementById('admin-list').innerHTML=data.map(t=> '<div class="card-bg p-4 flex justify-between items-center text-xs"><span class="font-bold text-yellow-500">' + t.match + ' (' + t.status + ')</span><div class="flex gap-4"><button onclick=\\'editTip(' + JSON.stringify(t) + ')\\' class="text-sky-400 font-bold underline">EDIT</button><button onclick=\\'deleteTip("' + t.id + '")\\' class="text-red-500 font-bold underline">DEL</button></div></div>').join(''); }
           window.editTip=(t)=>{ document.getElementById('tipId').value=t.id; document.getElementById('date').value=t.date; document.getElementById('league').value=t.league; document.getElementById('match').value=t.match; document.getElementById('tip').value=t.tip; document.getElementById('odds').value=t.odds; document.getElementById('result').value=t.result||''; document.getElementById('status').value=t.status; document.getElementById('isVip').checked=t.isVip||false; window.scrollTo(0,0); };
           window.deleteTip=async(id)=>{ const pass=document.getElementById('pass').value; if(!pass||!confirm('Delete?'))return; await fetch('/api/tips/'+id,{method:'DELETE',headers:{'Authorization':pass}}); location.reload(); };
           document.getElementById('saveBtn').onclick=async()=>{ const d={ id:document.getElementById('tipId').value||null, password:document.getElementById('pass').value, date:document.getElementById('date').value, league:document.getElementById('league').value, match:document.getElementById('match').value, tip:document.getElementById('tip').value, odds:document.getElementById('odds').value, result:document.getElementById('result').value, status:document.getElementById('status').value, isVip:document.getElementById('isVip').checked }; await fetch('/api/tips',{method:'POST',body:JSON.stringify(d)}); location.reload(); };
           loadAdmin();
-        </script>\`}</body></html>`;
-     return new Response(adminHtml, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
+        </script>`;
+    }
+
+    const adminHtml = `<!DOCTYPE html><html><head>${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto"><h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase">Admin Dashboard</h2>${adminContent}</body></html>`;
+    return new Response(adminHtml, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // --- API HANDLERS (FULL LOGIC) ---
+  // --- API HANDLERS ---
   if (url.pathname === "/api/tips" && req.method === "GET") {
     const isAdmin = url.searchParams.get("admin") === "true";
     const page = parseInt(url.searchParams.get("page") || "1");
-    const limit = 15;
     const iter = kv.list({ prefix: ["tips"] }); const tips = []; for await (const res of iter) tips.push(res.value);
     tips.sort((a, b) => Number(b.id) - Number(a.id));
     if (isAdmin) return new Response(JSON.stringify({ data: tips }), { headers: { "Content-Type": "application/json" } });
-    const startIndex = (page - 1) * limit;
+    const limit = 15; const startIndex = (page - 1) * limit;
     return new Response(JSON.stringify({ data: tips.slice(startIndex, startIndex + limit), totalPages: Math.ceil(tips.length / limit) }), { headers: { "Content-Type": "application/json; charset=UTF-8" } });
   }
 
