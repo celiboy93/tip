@@ -7,21 +7,22 @@ async function getStoredPassword() {
   return entry.value as string | null;
 }
 
-// စာလုံးစနစ်အတွက် UTF-8 ကို meta tag မှာ သေချာထည့်ထားပါတယ်
+// Mobile မှာ Desktop site ပြောင်းစရာမလိုဘဲ အချိုးကျစေမည့် CSS
 const UI_HEAD = `
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Winner Soccer Tips</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @keyframes glow {
-      0%, 100% { text-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444; transform: scale(1); }
-      50% { text-shadow: 0 0 25px #ef4444, 0 0 40px #ef4444; transform: scale(1.1); }
+      0%, 100% { text-shadow: 0 0 8px #ef4444, 0 0 15px #ef4444; transform: scale(1); }
+      50% { text-shadow: 0 0 20px #ef4444, 0 0 30px #ef4444; transform: scale(1.05); }
     }
     .win-effect { animation: glow 1.5s infinite; color: #ef4444; font-weight: 900; }
-    body { background-color: #0c0c0c; color: #fff; font-family: sans-serif; }
+    body { background-color: #0c0c0c; color: #fff; font-family: sans-serif; overflow-x: hidden; }
     .gold-gradient { background: linear-gradient(180deg, #f3ca52 0%, #a87f00 100%); }
     .card-bg { background-color: #141414; border: 1px solid #222; }
-    input, select { background: #1a1a1a; border: 1px solid #444; color: white; padding: 15px; border-radius: 8px; width: 100%; margin-bottom: 12px; font-size: 18px; }
+    input, select { background: #1a1a1a; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 10px; font-size: 16px; }
   </style>
 `;
 
@@ -33,72 +34,93 @@ serve(async (req) => {
   if (url.pathname === "/" && req.method === "GET") {
     const html = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>${UI_HEAD}</head>
-      <body class="p-4 max-w-4xl mx-auto">
-        <header class="flex justify-center items-center py-10">
-          <h1 class="text-4xl font-black italic text-yellow-500 tracking-tighter uppercase">BestSoccerTips</h1>
+      <body class="p-3 md:p-6 max-w-4xl mx-auto">
+        <header class="flex justify-center items-center py-8">
+          <h1 class="text-3xl md:text-5xl font-black italic text-yellow-500 tracking-tighter uppercase">Winner Soccer</h1>
         </header>
 
-        <section class="text-center mb-12 px-2">
-          <h2 class="text-xl font-bold text-white mb-4 uppercase tracking-widest">Premium Football Intelligence</h2>
-          <p class="text-zinc-400 text-lg leading-relaxed max-w-2xl mx-auto italic">
-            High-accuracy predictions powered by professional market insights. Trust the expert analysis to elevate your winning game.
+        <section class="text-center mb-10 px-2">
+          <h2 class="text-lg md:text-xl font-bold text-white mb-3 uppercase tracking-widest">Premium Football Intelligence</h2>
+          <p class="text-zinc-500 text-sm md:text-lg leading-relaxed max-w-2xl mx-auto italic">
+            High-accuracy predictions powered by professional market insights. Elevate your winning game with us.
           </p>
-          <div class="mt-8 flex justify-center gap-3">
-              <span class="bg-zinc-900 border border-zinc-700 px-5 py-2 rounded-full text-[13px] font-black text-yellow-500 uppercase">✓ 90% Accuracy</span>
-              <span class="bg-zinc-900 border border-zinc-700 px-5 py-2 rounded-full text-[13px] font-black text-yellow-500 uppercase">✓ Expert Analysts</span>
+          <div class="mt-6 flex justify-center gap-2">
+              <span class="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-full text-[11px] font-black text-yellow-500 uppercase">&check; 90% Accuracy</span>
+              <span class="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-full text-[11px] font-black text-yellow-500 uppercase">&check; Expert Analysts</span>
           </div>
         </section>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-            <div class="card-bg rounded-2xl p-8 text-center border-t-4 border-yellow-500 shadow-2xl">
-                <div class="gold-gradient text-black font-black py-2 rounded-lg mb-6 text-xl uppercase">Normal Tips</div>
-                <h2 class="text-6xl font-black mb-6">55$</h2>
-                <button class="bg-sky-500 w-full py-5 rounded-full font-black text-xl uppercase">Activate Plan</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+            <div class="card-bg rounded-2xl p-6 text-center border-t-4 border-yellow-500">
+                <div class="gold-gradient text-black font-black py-1 rounded-lg mb-4 text-sm uppercase font-bold">Normal Tips Plan</div>
+                <h2 class="text-5xl font-black mb-4">55$</h2>
+                <button class="bg-sky-500 w-full py-4 rounded-full font-black text-lg uppercase">Activate Plan</button>
             </div>
-            <div class="card-bg rounded-2xl p-8 text-center border-t-4 border-sky-500 shadow-2xl">
-                <div class="gold-gradient text-black font-black py-2 rounded-lg mb-6 text-xl uppercase">VIP Intelligence</div>
-                <h2 class="text-6xl font-black mb-6">650$</h2>
-                <button class="bg-sky-500 w-full py-5 rounded-full font-black text-xl uppercase">Join VIP Group</button>
+            <div class="card-bg rounded-2xl p-6 text-center border-t-4 border-sky-500">
+                <div class="gold-gradient text-black font-black py-1 rounded-lg mb-4 text-sm uppercase font-bold">VIP Intelligence</div>
+                <h2 class="text-5xl font-black mb-4">650$</h2>
+                <button class="bg-sky-500 w-full py-4 rounded-full font-black text-lg uppercase">Join VIP Group</button>
             </div>
         </div>
 
-        <div class="flex justify-between items-end mb-8 border-l-4 border-yellow-500 pl-4">
-            <h3 class="text-yellow-500 font-black text-xl uppercase tracking-tighter">Verified Daily Results</h3>
-            <span class="text-xs text-zinc-600 font-bold uppercase tracking-widest pb-1">Latest 15 Updates</span>
+        <div class="flex justify-between items-center mb-6 border-l-4 border-yellow-500 pl-3">
+            <h3 class="text-yellow-500 font-black text-lg uppercase tracking-tighter">Verified Daily Results</h3>
         </div>
         
-        <div id="tips-list" class="space-y-4"></div>
+        <div id="tips-list" class="space-y-3"></div>
+
+        <div class="flex justify-center gap-4 mt-10 mb-20">
+            <button id="prevBtn" class="bg-zinc-800 px-6 py-2 rounded-lg font-bold text-zinc-400 hidden">Previous</button>
+            <button id="nextBtn" class="bg-zinc-800 px-6 py-2 rounded-lg font-bold text-yellow-500 hidden">Next Page</button>
+        </div>
 
         <script>
-          async function fetchTips() {
-            const res = await fetch('/api/tips');
-            const data = await res.json();
+          let currentPage = 1;
+          const limit = 15;
+
+          async function fetchTips(page = 1) {
+            const res = await fetch(\`/api/tips?page=\${page}&limit=\${limit}\`);
+            const { data, hasNext, hasPrev } = await res.json();
+            
             const list = document.getElementById('tips-list');
             list.innerHTML = data.map(t => {
               const statusClass = t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-700' : 'text-sky-500');
               return \`
-                <div class="card-bg p-6 rounded-2xl flex justify-between items-center shadow-lg border-b border-zinc-800">
+                <div class="card-bg p-4 md:p-6 rounded-2xl flex justify-between items-center shadow-lg border-b border-zinc-800">
                   <div class="flex-1">
-                    <div class="text-[11px] text-zinc-500 font-black uppercase mb-1 tracking-wider">\${t.date} | \${t.league}</div>
-                    <div class="text-2xl font-black text-yellow-500">\${t.match}</div>
-                    <div class="text-lg mt-1 font-medium text-zinc-300">Prediction: <span class="text-white font-bold">\${t.tip}</span> | Odds: \${t.odds}</div>
+                    <div class="text-[10px] text-zinc-500 font-black uppercase mb-1">\${t.date} | \${t.league}</div>
+                    <div class="text-xl md:text-2xl font-black text-yellow-500 leading-tight">\${t.match}</div>
+                    <div class="text-sm md:text-lg mt-1 font-medium text-zinc-400">Tip: <span class="text-white font-bold">\${t.tip}</span> | Odds: \${t.odds}</div>
                   </div>
-                  <div class="text-center px-6">
-                     <div class="text-3xl font-black text-zinc-300">\${t.result || '-:-'}</div>
-                     <div class="text-[10px] uppercase text-zinc-600 font-black tracking-widest mt-1">Score</div>
+                  <div class="text-center px-3">
+                     <div class="text-2xl md:text-3xl font-black text-zinc-300">\${t.result || '-:-'}</div>
+                     <div class="text-[9px] uppercase text-zinc-600 font-black mt-1">Score</div>
                   </div>
-                  <div class="text-right w-24">
-                    <div class="\${statusClass} font-black text-3xl italic uppercase tracking-tighter">\${t.status}</div>
+                  <div class="text-right w-20">
+                    <div class="\${statusClass} font-black text-2xl italic uppercase tracking-tighter">\${t.status}</div>
                   </div>
                 </div>\`;
             }).join('');
+
+            // Pagination Logic
+            const nextBtn = document.getElementById('nextBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            
+            if (hasNext) { nextBtn.classList.remove('hidden'); } else { nextBtn.classList.add('hidden'); }
+            if (hasPrev) { prevBtn.classList.remove('hidden'); } else { prevBtn.classList.add('hidden'); }
+            window.scrollTo({ top: list.offsetTop - 100, behavior: 'smooth' });
           }
-          fetchTips();
+
+          document.getElementById('nextBtn').onclick = () => { currentPage++; fetchTips(currentPage); };
+          document.getElementById('prevBtn').onclick = () => { currentPage--; fetchTips(currentPage); };
+
+          fetchTips(currentPage);
         </script>
-        <footer class="mt-20 py-12 border-t border-zinc-900 text-center">
-           <p class="text-zinc-700 text-[10px] font-black uppercase tracking-[0.3em]">&copy; 2025 BESTSOCCERTIPS.COM</p>
+
+        <footer class="mt-10 py-10 border-t border-zinc-900 text-center">
+           <p class="text-zinc-700 text-[10px] font-black uppercase tracking-widest">&copy; 2025 WINNER-SOCCER.COM</p>
         </footer>
       </body>
       </html>
@@ -106,20 +128,18 @@ serve(async (req) => {
     return new Response(html, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 2. ADMIN PANEL (Hidden Route)
+  // 2. ADMIN PANEL (Hidden Route) - ဖုန်းဖြင့်ပြင်ဆင်ရန်
   if (url.pathname === "/admin" && req.method === "GET") {
     const adminHtml = `
       <!DOCTYPE html>
-      <html>
-      <head>${UI_HEAD}</head>
-      <body class="p-6 max-w-2xl mx-auto">
-        <h2 class="text-3xl font-black text-yellow-500 mb-8 uppercase italic">Admin Dashboard</h2>
-        
+      <html><head>${UI_HEAD}</head>
+      <body class="p-4 max-w-2xl mx-auto">
+        <h2 class="text-2xl font-black text-yellow-500 mb-6 uppercase italic">Admin Dashboard</h2>
         ${!storedPass ? `
-          <div class="card-bg p-8 rounded-2xl">
-            <h3 class="mb-4 font-bold text-yellow-500">Setup Security Password</h3>
-            <input type="password" id="newPass" placeholder="Secret Admin Password">
-            <button onclick="setPass()" class="bg-yellow-600 w-full py-4 rounded-lg font-black mt-2">SAVE PASSWORD</button>
+          <div class="card-bg p-6 rounded-2xl">
+            <h3 class="mb-3 font-bold text-yellow-500">Setup Admin Password</h3>
+            <input type="password" id="newPass" placeholder="Secret Password">
+            <button onclick="setPass()" class="bg-yellow-600 w-full py-4 rounded-lg font-black mt-2">SAVE</button>
           </div>
           <script>
             async function setPass() {
@@ -129,17 +149,17 @@ serve(async (req) => {
             }
           </script>
         ` : `
-          <div class="card-bg p-8 rounded-2xl mb-12 shadow-2xl">
+          <div class="card-bg p-6 rounded-2xl mb-8 shadow-2xl">
             <input type="hidden" id="tipId">
             <input type="password" id="pass" placeholder="Secret Key" class="mb-4">
-            <div class="grid grid-cols-2 gap-4">
-              <input type="text" id="date" placeholder="Date (19/12 20:00)">
-              <input type="text" id="league" placeholder="League (ENG PR)">
+            <div class="grid grid-cols-2 gap-3">
+              <input type="text" id="date" placeholder="Date">
+              <input type="text" id="league" placeholder="League">
             </div>
             <input type="text" id="match" placeholder="Home - Away">
-            <input type="text" id="tip" placeholder="Prediction (e.g. Over 2.5)">
-            <div class="grid grid-cols-2 gap-4">
-              <input type="text" id="odds" placeholder="Odds (1.05)">
+            <input type="text" id="tip" placeholder="Prediction">
+            <div class="grid grid-cols-2 gap-3">
+              <input type="text" id="odds" placeholder="Odds">
               <input type="text" id="result" placeholder="Result (2:1)">
             </div>
             <select id="status">
@@ -147,31 +167,25 @@ serve(async (req) => {
               <option value="Win">Win</option>
               <option value="Lose">Lose</option>
             </select>
-            <button id="saveBtn" class="bg-yellow-600 w-full py-5 rounded-xl font-black text-xl">SAVE DATA</button>
-            <button onclick="location.reload()" class="w-full text-zinc-600 mt-4 text-xs font-black uppercase">Clear Form</button>
+            <button id="saveBtn" class="bg-yellow-600 w-full py-4 rounded-xl font-black text-lg">SAVE DATA</button>
           </div>
-
-          <h3 class="text-zinc-600 font-black mb-4 uppercase text-xs tracking-widest">Manage Records</h3>
           <div id="admin-tips-list" class="space-y-3"></div>
-
           <script>
             async function loadAdminTips() {
               const res = await fetch('/api/tips?admin=true');
-              const data = await res.json();
-              const list = document.getElementById('admin-tips-list');
-              list.innerHTML = data.map(t => \`
-                <div class="card-bg p-4 rounded-xl flex justify-between items-center">
+              const { data } = await res.json();
+              document.getElementById('admin-tips-list').innerHTML = data.map(t => \`
+                <div class="card-bg p-4 rounded-xl flex justify-between items-center text-sm">
                   <div>
-                    <div class="font-bold text-yellow-500 text-lg">\${t.match}</div>
-                    <div class="text-zinc-600 text-[10px] font-black uppercase">\${t.date} | \${t.result || '-:-'} | \${t.status}</div>
+                    <div class="font-bold text-yellow-500">\${t.match}</div>
+                    <div class="text-zinc-600 text-[10px] uppercase font-bold">\${t.date} | \${t.status}</div>
                   </div>
                   <div class="flex gap-2">
-                    <button onclick='editTip(\${JSON.stringify(t)})' class="bg-zinc-800 px-4 py-2 rounded font-black text-sky-400 text-xs uppercase">Edit</button>
-                    <button onclick='deleteTip("\${t.id}")' class="bg-red-900/20 px-4 py-2 rounded font-black text-red-500 text-xs uppercase">Del</button>
+                    <button onclick='editTip(\${JSON.stringify(t)})' class="bg-zinc-800 px-3 py-1 rounded font-bold text-sky-400 text-xs">EDIT</button>
+                    <button onclick='deleteTip("\${t.id}")' class="bg-red-900/20 px-3 py-1 rounded font-bold text-red-500 text-xs">DEL</button>
                   </div>
                 </div>\`).join('');
             }
-
             window.editTip = (t) => {
               document.getElementById('tipId').value = t.id;
               document.getElementById('date').value = t.date;
@@ -183,14 +197,12 @@ serve(async (req) => {
               document.getElementById('status').value = t.status;
               window.scrollTo({ top: 0, behavior: 'smooth' });
             };
-
             window.deleteTip = async (id) => {
               const pass = document.getElementById('pass').value;
               if(!pass || !confirm('Delete this?')) return;
               await fetch('/api/tips/' + id, { method: 'DELETE', headers: { 'Authorization': pass } });
               location.reload();
             };
-
             document.getElementById('saveBtn').onclick = async () => {
               const data = {
                 id: document.getElementById('tipId').value || null,
@@ -204,32 +216,46 @@ serve(async (req) => {
                 status: document.getElementById('status').value
               };
               const res = await fetch('/api/tips', { method: 'POST', body: JSON.stringify(data) });
-              if(res.ok) location.reload(); else alert('Error or Wrong Key');
+              if(res.ok) location.reload(); else alert('Error!');
             };
             loadAdminTips();
           </script>
         `}
-      </body>
-      </html>
+      </body></html>
     `;
     return new Response(adminHtml, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // --- API Handlers ---
+  // --- API Handlers (Pagination Fixed) ---
   if (url.pathname === "/api/tips" && req.method === "GET") {
     const isAdmin = url.searchParams.get("admin") === "true";
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "15");
+    
     const iter = kv.list({ prefix: ["tips"] });
     const tips = [];
-    for await (const res of iter) tips.push(res.value);
+    for await (const res of iter) { tips.push(res.value); }
     
-    // နောက်ဆုံးတင်တာ ထိပ်ဆုံးမှာပေါ်ဖို့ ID (Timestamp) နဲ့ Sort လုပ်သည်
+    // Newest first sorting
     tips.sort((a, b) => Number(b.id) - Number(a.id));
 
-    // Web မလေးအောင် နောက်ဆုံး ၁၅ ခုပဲ ပြမယ် (Deno Pro နဲ့ဆိုရင် Performance အရမ်းမြန်ပါသည်)
-    const result = isAdmin ? tips : tips.slice(0, 15);
-    return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json; charset=UTF-8" } });
+    if (isAdmin) {
+      return new Response(JSON.stringify({ data: tips }), { headers: { "Content-Type": "application/json" } });
+    }
+
+    // Pagination Logic
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const paginatedData = tips.slice(startIndex, endIndex);
+
+    return new Response(JSON.stringify({
+      data: paginatedData,
+      hasNext: endIndex < tips.length,
+      hasPrev: page > 1
+    }), { headers: { "Content-Type": "application/json; charset=UTF-8" } });
   }
 
+  // Post & Delete logic (Remains same)
   if (url.pathname === "/api/tips" && req.method === "POST") {
     const body = await req.json();
     if (body.password !== storedPass) return new Response("Unauthorized", { status: 401 });
