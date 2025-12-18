@@ -18,7 +18,7 @@ const UI_HEAD = `
     body { background-color: #0c0c0c; color: #fff; font-family: sans-serif; font-size: 14px; }
     .gold-gradient { background: linear-gradient(180deg, #f3ca52 0%, #a87f00 100%); }
     .card-bg { background-color: #111; border: 1px solid #222; }
-    .match-row { background-color: #141414; border-bottom: 1px solid #222; text-align: center; transition: background 0.2s; }
+    .match-row { background-color: #141414; border-bottom: 1px solid #222; text-align: center; }
     .match-row:hover { background-color: #1a1a1a; }
     .stripe-input { width: 100%; padding: 12px; border: 1px solid #333; background: #1a1a1a; border-radius: 5px; color: #fff; font-size: 16px; margin-bottom: 15px; outline: none; }
     .btn-main { background: #f3ca52; color: #000; width: 100%; padding: 14px; border-radius: 5px; font-weight: 900; cursor: pointer; }
@@ -26,7 +26,7 @@ const UI_HEAD = `
     .page-btn { background: #222; color: #888; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 0 4px; border: 1px solid #333; }
     .page-btn.active { background: #f3ca52; color: #000; border-color: #f3ca52; }
     #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .toast { background: #1a1a1a; border-left: 4px solid #f3ca52; color: white; padding: 12px 20px; border-radius: 6px; margin-bottom: 8px; transform: translateX(120%); transition: 0.3s; font-weight: bold; font-size: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .toast { background: #1a1a1a; border-left: 4px solid #f3ca52; color: white; padding: 12px 20px; border-radius: 6px; margin-bottom: 8px; transform: translateX(120%); transition: 0.3s; font-weight: bold; font-size: 12px; }
     .toast.show { transform: translateX(0); }
     .toast.success { border-left-color: #22c55e; }
     #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 10000; visibility: hidden; opacity: 0; transition: 0.2s; }
@@ -48,6 +48,18 @@ serve(async (req) => {
 
       <div class="max-w-[1050px] mx-auto text-center">
         <header class="py-12"><h1 class="text-6xl font-black italic text-yellow-500 uppercase tracking-tighter">Winner-Match Deno Dev</h1></header>
+        
+        <section class="mb-12 px-10 text-center">
+          <h2 class="text-2xl font-bold text-white mb-4 uppercase tracking-[0.2em]">Premium Football Intelligence</h2>
+          <p class="text-zinc-500 text-lg leading-relaxed italic max-w-3xl mx-auto">
+            Welcome to Winner-Match. Our expert analysis combines deep statistical data with professional market insights to deliver high-accuracy predictions. Elevate your winning game today.
+          </p>
+          <div class="mt-8 flex justify-center gap-6">
+              <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ 90% Accuracy</span>
+              <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ Expert Analysts</span>
+          </div>
+        </section>
+
         <div id="guest-ui">
           <div class="max-w-md mx-auto card-bg p-10 rounded-2xl shadow-2xl border-t-4 border-yellow-500 mb-20">
              <h2 class="text-2xl font-black mb-6 italic uppercase text-yellow-500">Member Login</h2>
@@ -75,12 +87,9 @@ serve(async (req) => {
         <div class="card-bg rounded-2xl overflow-hidden shadow-2xl">
           <table class="w-full border-collapse">
             <thead><tr class="gold-gradient text-black text-[11px] font-black uppercase">
-              <th class="p-4 border-r border-black/10">Date</th>
-              <th class="p-4 border-r border-black/10">Match Details</th>
-              <th class="p-4 border-r border-black/10">Over Line</th>
-              <th class="p-4 border-r border-black/10">Odds</th>
-              <th class="p-4 border-r border-black/10 text-center">Score</th>
-              <th class="p-4 text-center">Status</th>
+              <th class="p-4 border-r border-black/10">Date</th><th class="p-4 border-r border-black/10">Match Details</th>
+              <th class="p-4 border-r border-black/10">Over Line</th><th class="p-4 border-r border-black/10">Odds</th>
+              <th class="p-4 border-r border-black/10 text-center">Score</th><th class="p-4 text-center">Status</th>
             </tr></thead>
             <tbody id="tips-table-body"></tbody>
           </table>
@@ -90,13 +99,13 @@ serve(async (req) => {
       </div>
 
       <script>
-        let curPage = 1; function showToast(m, t='info'){ const c=document.getElementById('toast-container'); const el=document.createElement('div'); el.className='toast '+t; el.innerText=m; c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show'); setTimeout(()=>el.remove(),300)},3000); }
+        function showToast(m, t='info'){ const c=document.getElementById('toast-container'); const el=document.createElement('div'); el.className='toast '+t; el.innerText=m; c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show'); setTimeout(()=>el.remove(),300)},3000); }
         function askConfirm(m, y){ document.getElementById('modal-msg').innerText=m; document.getElementById('custom-modal').classList.add('active'); document.getElementById('modal-yes').onclick=()=>{ y(); closeModal(); }; }
         function closeModal(){ document.getElementById('custom-modal').classList.remove('active'); }
         async function doLogin(){
           const u=document.getElementById('uName').value; const p=document.getElementById('uPass').value;
           const res=await fetch('/api/user-login',{method:'POST',body:JSON.stringify({user:u,pass:p})});
-          if(res.ok){ const d=await res.json(); localStorage.setItem('winner_user',JSON.stringify(d)); location.reload(); } else { showToast('Invalid Login!','error'); }
+          if(res.ok){ const d=await res.json(); localStorage.setItem('winner_user',JSON.stringify(d)); location.reload(); } else { showToast('Invalid Account Details!','error'); }
         }
         function logout(){ localStorage.removeItem('winner_user'); location.reload(); }
         async function submitPassChange() {
@@ -109,7 +118,6 @@ serve(async (req) => {
           const res=await fetch('/api/tips?page=' + page + '&limit=20'); const {data, totalPages}=await res.json();
           document.getElementById('tips-table-body').innerHTML=data.map(t=>{
             const isPending=t.status==='Pending'; const isUnlocked=userData?.unlockedTips?.includes(t.id)||!isPending;
-            // Locked Info Visibility Fix - Yellow-500 & Larger
             let mTxt=isUnlocked?t.match:'<span class="text-yellow-500 tracking-widest font-black uppercase text-xs">Locked Info</span>';
             let tTxt=isUnlocked?('<span class="text-white font-bold">'+t.tip+'</span>'):(userData?'<button onclick="unlockTip(\\''+t.id+'\\')" class="unlock-btn">UNLOCK TIP</button>':'<span class="text-yellow-400 font-bold uppercase tracking-tighter">Locked 🔒</span>');
             let sClass = t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-700' : (t.status === 'Draw' ? 'text-zinc-400' : 'text-sky-600'));
@@ -127,19 +135,23 @@ serve(async (req) => {
       </script></body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 2. ADMIN PANEL (PARSER ERROR & DELETE FIX)
+  // 2. ADMIN PANEL (FULL CORRECTED)
   if (url.pathname === "/admin" && req.method === "GET") {
-    const adminInner = !storedPass ? \`<div class="card-bg p-8 rounded-xl shadow-2xl"><input type="password" id="newPass" class="stripe-input" placeholder="Setup Password"><button onclick="setPass()" class="btn-main">SETUP</button></div><script>async function setPass(){ const pass=document.getElementById("newPass").value; await fetch("/api/config",{method:"POST",body:JSON.stringify({pass})}); location.reload(); }</script>\` : \`
+    let adminBody = "";
+    if (!storedPass) {
+       adminBody = \`<div class="card-bg p-8 rounded-xl shadow-2xl"><input type="password" id="newPass" class="stripe-input" placeholder="Setup Password"><button onclick="setPass()" class="btn-main">SETUP</button></div><script>async function setPass(){ const pass=document.getElementById("newPass").value; await fetch("/api/config",{method:"POST",body:JSON.stringify({pass})}); location.reload(); }</script>\`;
+    } else {
+       adminBody = \`
         <div id="admin-login-box" class="card-bg p-8 rounded-xl shadow-2xl max-w-sm mx-auto">
            <input type="password" id="adminPassInput" class="stripe-input" placeholder="Admin Key"><button onclick="adminLogin()" class="btn-main uppercase">Login Admin</button>
         </div>
         <div id="admin-dashboard" class="hidden">
           <div class="flex justify-between items-center mb-8 bg-zinc-900 p-4 rounded-lg"><span class="font-black text-yellow-500 uppercase text-[10px]">Session Active</span><button onclick="sessionStorage.removeItem('admin_key'); location.reload();" class="text-zinc-500 underline text-[10px]">Logout</button></div>
-          <div class="card-bg p-6 rounded-xl mb-12 border-t-4 border-green-600 shadow-2xl"><h3 class="text-green-500 font-black mb-4 uppercase text-xs tracking-widest">Live Unlock History</h3><div id="history-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2"></div></div>
+          <div class="card-bg p-6 rounded-xl mb-12 border-t-4 border-green-600 shadow-2xl"><h3 class="text-green-500 font-black mb-4 uppercase text-xs tracking-widest">Live Unlock History</h3><div id="history-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 text-left"></div></div>
           <div class="card-bg p-8 rounded-2xl mb-12 border-t-4 border-sky-500">
             <h3 class="text-sky-500 font-black mb-4 uppercase text-xs">Member Manager</h3>
             <div class="grid grid-cols-2 gap-4"><input type="text" id="targetUser" placeholder="Username" class="stripe-input"><input type="number" id="targetCredits" placeholder="ADD Credits" class="stripe-input"></div>
-            <input type="text" id="targetPass" placeholder="User Pass (Empty to Keep)" class="stripe-input"><button onclick="saveUser()" class="bg-sky-600 w-full py-4 rounded font-bold text-xs uppercase tracking-widest">Update User</button>
+            <input type="text" id="targetPass" placeholder="User Pass (Keep Empty to Skip)" class="stripe-input"><button onclick="saveUser()" class="bg-sky-600 w-full py-4 rounded font-bold text-xs uppercase tracking-widest">Save Member</button>
           </div>
           <div id="user-list" class="space-y-2 mb-12"></div>
           <div class="card-bg p-8 rounded-2xl border-t-4 border-yellow-500 mb-10" id="form-top">
@@ -149,7 +161,7 @@ serve(async (req) => {
             <input type="text" id="match" placeholder="Match Details" class="stripe-input"><input type="text" id="tip" placeholder="Over Line" class="stripe-input">
             <div class="grid grid-cols-2 gap-4"><input type="text" id="odds" placeholder="Odds" class="stripe-input"><input type="text" id="result" placeholder="Score" class="stripe-input"></div>
             <select id="status" class="stripe-input !bg-zinc-900"><option value="Pending">Pending</option><option value="Win">Win</option><option value="Draw">Draw</option><option value="Lose">Lose</option></select>
-            <button onclick="saveTip()" id="saveBtn" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase tracking-widest">Save Record</button>
+            <button onclick="saveTip()" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase tracking-widest">Save Record</button>
             <button onclick="location.reload()" class="w-full mt-4 text-zinc-600 uppercase text-[10px] font-bold">Clear Form</button>
           </div>
           <h3 class="text-zinc-500 uppercase text-[10px] font-black mb-4 tracking-widest">Match History (Latest 30)</h3>
@@ -160,24 +172,24 @@ serve(async (req) => {
           const adminSessionKey = sessionStorage.getItem('admin_key');
           if(adminSessionKey) { document.getElementById('admin-login-box').classList.add('hidden'); document.getElementById('admin-dashboard').classList.remove('hidden'); loadAdminData(); }
           async function adminLogin() { const p = document.getElementById('adminPassInput').value; const r = await fetch('/api/admin-verify', { method: 'POST', body: JSON.stringify({ pass: p }) }); if(r.ok) { sessionStorage.setItem('admin_key', p); location.reload(); } else { alert('Wrong Key!'); } }
-          async function saveUser() { const d = { adminKey: adminSessionKey, user: document.getElementById('targetUser').value, pass: document.getElementById('targetPass').value, credits: parseInt(document.getElementById('targetCredits').value || 0) }; const r = await fetch('/api/create-user', { method: 'POST', body: JSON.stringify(d) }); if(r.ok) { showToast('✅ Member Updated!', 'success'); loadAdminData(); } }
+          async function saveUser() { const d = { adminKey: adminSessionKey, user: document.getElementById('targetUser').value, pass: document.getElementById('targetPass').value, credits: parseInt(document.getElementById('targetCredits').value || 0) }; const r = await fetch('/api/create-user', { method: 'POST', body: JSON.stringify(d) }); if(r.ok) { showToast('✅ User Updated!', 'success'); loadAdminData(); } }
           async function saveTip() {
             const d = { password: adminSessionKey, id: document.getElementById('tipId').value, date: document.getElementById('date').value, match: document.getElementById('match').value, tip: document.getElementById('tip').value, odds: document.getElementById('odds').value, result: document.getElementById('result').value, status: document.getElementById('status').value, lockTime: document.getElementById('lockTime').value };
             const r = await fetch('/api/tips', { method: 'POST', body: JSON.stringify(d) });
-            if(r.ok) { showToast('✅ Tip Saved Successfully!', 'success'); setTimeout(()=>location.reload(), 1000); } else { showToast('❌ Error!', 'error'); }
+            if(r.ok) { showToast('✅ Tip Saved Successfully!', 'success'); setTimeout(()=>location.reload(), 1000); } else { showToast('❌ Error Saving!', 'error'); }
           }
           async function loadAdminData() {
-            const r1 = await fetch('/api/admin-users'); const u = await r1.json(); document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600"><div><span class="font-bold text-white">'+x.user+'</span><span class="ml-4 bg-sky-900/50 text-sky-400 px-3 py-0.5 rounded-full">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div>').join('');
+            const r1 = await fetch('/api/admin-users'); const u = await r1.json(); document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600 text-left"><div><span class="font-bold text-white">'+x.user+'</span><br><span class="bg-sky-900/50 text-sky-400 px-2 py-0.5 rounded-full font-black">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div>').join('');
             const r2 = await fetch('/api/tips?admin=true&limit=30'); const t = await r2.json();
-            document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50"><span>['+y.date+'] '+y.match+'</span><div class="flex gap-4"><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline font-bold uppercase">Edit</button><button onclick=\\'deleteT("'+y.id+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div></div>').join('');
+            document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50 text-left"><span>['+y.date+'] '+y.match+'</span><div class="flex gap-4"><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline font-bold uppercase">Edit</button><button onclick=\\'deleteT("'+y.id+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div></div>').join('');
             const r3 = await fetch('/api/admin-history'); const h = await r3.json(); document.getElementById('history-list').innerHTML = h.map(i => '<div class="bg-zinc-900/30 p-2 border-b border-zinc-800 text-[10px]"><span class="text-sky-400 font-bold">'+i.user+'</span> unlocked <span class="text-yellow-500">'+i.match+'</span> <span class="text-zinc-600 italic">('+i.time+')</span></div>').join('');
           }
-          window.deleteT = async (id) => { if(!confirm('Delete match?')) return; await fetch('/api/delete-tip', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, id }) }); showToast('✅ Deleted!', 'success'); loadAdminData(); };
-          window.deleteU = async (u) => { if(!confirm('Delete member?')) return; await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, user: u }) }); loadAdminData(); };
+          window.deleteT = async (id) => { if(!confirm('Delete Match Tip?')) return; await fetch('/api/delete-tip', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, id }) }); showToast('✅ Deleted!', 'success'); loadAdminData(); };
+          window.deleteU = async (u) => { if(!confirm('Delete Member?')) return; await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, user: u }) }); loadAdminData(); };
           window.editT = (t) => { document.getElementById('tipId').value=t.id; document.getElementById('date').value=t.date; document.getElementById('match').value=t.match; document.getElementById('tip').value=t.tip; document.getElementById('odds').value=t.odds; document.getElementById('result').value=t.result||''; document.getElementById('status').value=t.status; document.getElementById('lockTime').value=t.lockTime||''; document.getElementById('form-top').scrollIntoView({behavior:'smooth'}); };
         </script>\`;
 
-    return new Response(\`<!DOCTYPE html><html><head>\${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto"><div id="toast-container"></div><h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase text-center tracking-tighter">Admin Console</h2>\${adminInner}</body></html>\`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
+    return new Response(\`<!DOCTYPE html><html><head>\${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto"><div id="toast-container"></div><h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase text-center tracking-tighter">Admin Console</h2>\${adminBody}</body></html>\`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
   // --- API HANDLERS ---
