@@ -2,19 +2,22 @@ import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 
 const kv = await Deno.openKv();
 
-// --- Helper: KV ထဲက Password ကို ယူခြင်း ---
 async function getStoredPassword() {
   const entry = await kv.get(["config", "admin_password"]);
   return entry.value as string | null;
 }
 
+// --- CSS with Larger Fonts ---
 const UI_CSS = `
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background-color: #0c0c0c; color: #fff; font-family: sans-serif; }
+    body { background-color: #0c0c0c; color: #fff; font-family: sans-serif; font-size: 18px; }
     .gold-gradient { background: linear-gradient(180deg, #f3ca52 0%, #a87f00 100%); }
     .card-bg { background-color: #141414; border: 1px solid #222; }
-    input, select { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 5px; width: 100%; margin-bottom: 12px; }
+    input, select { background: #1a1a1a; border: 1px solid #444; color: white; padding: 15px; border-radius: 8px; width: 100%; margin-bottom: 15px; font-size: 18px; }
+    button { transition: all 0.2s; }
+    button:active { transform: scale(0.95); }
+    .table-cell { padding: 15px 10px; border-bottom: 1px solid #222; }
   </style>
 `;
 
@@ -24,24 +27,38 @@ serve(async (req) => {
 
   // 1. PUBLIC HOME PAGE
   if (url.pathname === "/" && req.method === "GET") {
-    // (အရှေ့က code အတိုင်း ထားနိုင်ပါတယ်...)
     return new Response(`<html><head>${UI_CSS}</head><body class="p-4 max-w-4xl mx-auto">
-      <header class="flex justify-between items-center py-4 border-b border-zinc-800 mb-6">
-        <h1 class="text-xl font-bold italic text-yellow-500">BESTSOCCERTIPS</h1>
-        <a href="/admin" class="bg-zinc-800 px-4 py-1 rounded text-sm text-zinc-400">Admin</a>
+      <header class="flex justify-between items-center py-6 border-b border-zinc-800 mb-8">
+        <h1 class="text-2xl font-bold italic text-yellow-500">BESTSOCCERTIPS</h1>
+        <a href="/admin" class="bg-zinc-800 px-5 py-2 rounded-lg text-sm font-bold text-zinc-400">ADMIN</a>
       </header>
-      <h3 class="text-yellow-500 font-bold mb-4 text-sm tracking-widest uppercase">Latest Premium Tips</h3>
-      <div id="tips-list" class="space-y-3"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div class="card-bg rounded-xl p-8 text-center">
+              <div class="gold-gradient text-black font-black py-2 rounded-t-lg mb-6 text-xl">3 NORMAL TIPS</div>
+              <h2 class="text-5xl font-black mb-6">55$</h2>
+              <button class="bg-sky-500 w-full py-4 rounded-full font-black text-xl">BUY NOW</button>
+          </div>
+          <div class="card-bg rounded-xl p-8 text-center border-yellow-600/30">
+              <div class="gold-gradient text-black font-black py-2 rounded-t-lg mb-6 text-xl">1 VIP TIP</div>
+              <h2 class="text-5xl font-black mb-6">650$</h2>
+              <button class="bg-sky-500 w-full py-4 rounded-full font-black text-xl">BUY NOW</button>
+          </div>
+      </div>
+
+      <h3 class="text-yellow-500 font-black mb-6 text-lg tracking-widest uppercase">Latest Premium Tips</h3>
+      <div id="tips-list" class="space-y-4"></div>
+
       <script>
         fetch('/api/tips').then(res => res.json()).then(data => {
           document.getElementById('tips-list').innerHTML = data.map(t => \`
-            <div class="card-bg p-4 rounded-lg flex justify-between items-center">
+            <div class="card-bg p-5 rounded-xl flex justify-between items-center shadow-lg">
               <div>
-                <div class="text-xs text-zinc-500">\${t.date} | \${t.league}</div>
-                <div class="font-bold text-yellow-500">\${t.match}</div>
-                <div class="text-sm">Tip: <span class="text-white">\${t.tip}</span> | Odds: \${t.odds}</div>
+                <div class="text-sm text-zinc-500 font-bold mb-1">\${t.date} | \${t.league}</div>
+                <div class="text-2xl font-black text-yellow-500 mb-1">\${t.match}</div>
+                <div class="text-lg">Tip: <span class="text-white font-bold">\${t.tip}</span> | Odds: <span class="font-mono">\${t.odds}</span></div>
               </div>
-              <div class="\${t.status === 'Win' ? 'text-red-500' : (t.status === 'Lose' ? 'text-zinc-500' : 'text-sky-400')} font-bold text-xl">\${t.status}</div>
+              <div class="\${t.status === 'Win' ? 'text-red-500' : (t.status === 'Lose' ? 'text-zinc-600' : 'text-sky-400')} font-black text-3xl italic">\${t.status}</div>
             </div>
           \`).join('');
         });
@@ -49,15 +66,13 @@ serve(async (req) => {
     </body></html>`, { headers: { "Content-Type": "text/html" } });
   }
 
-  // 2. ADMIN PANEL (Setup & Add Tip)
+  // 2. ADMIN PANEL (WITH EDIT LIST)
   if (url.pathname === "/admin" && req.method === "GET") {
-    // Password မရှိသေးရင် Set Password အရင်လုပ်ခိုင်းမယ်
     if (!storedPass) {
-      return new Response(`<html><head>${UI_CSS}</head><body class="p-6 max-w-md mx-auto">
-        <h2 class="text-2xl font-bold text-yellow-500 mb-4">Set Admin Password</h2>
-        <p class="text-zinc-400 mb-6 text-sm">ပထမဆုံးအကြိမ်မို့လို့ Password အသစ် သတ်မှတ်ပေးပါ။</p>
-        <input type="password" id="newPass" placeholder="Enter New Password">
-        <button onclick="setPass()" class="bg-yellow-600 w-full py-3 rounded font-bold">Set Password</button>
+       return new Response(`<html><head>${UI_CSS}</head><body class="p-6 max-w-md mx-auto">
+        <h2 class="text-3xl font-black text-yellow-500 mb-6">Set Password</h2>
+        <input type="password" id="newPass" placeholder="New Password">
+        <button onclick="setPass()" class="bg-yellow-600 w-full py-4 rounded-lg font-black text-xl">SAVE</button>
         <script>
           async function setPass() {
             const pass = document.getElementById('newPass').value;
@@ -68,25 +83,59 @@ serve(async (req) => {
       </body></html>`, { headers: { "Content-Type": "text/html" } });
     }
 
-    // Password ရှိရင် ပုံမှန် Admin Form ပြမယ်
-    return new Response(`<html><head>${UI_CSS}</head><body class="p-6 max-w-md mx-auto">
-        <h2 class="text-2xl font-bold text-yellow-500 mb-6">Admin Panel</h2>
-        <input type="password" id="pass" placeholder="Admin Password">
-        <hr class="border-zinc-800 my-4">
-        <input type="text" id="date" placeholder="Date (e.g., 19/12 20:00)">
-        <input type="text" id="league" placeholder="League (e.g., FRAC)">
-        <input type="text" id="match" placeholder="Match (e.g., Lens - Feignies)">
-        <input type="text" id="tip" placeholder="Tip (e.g., Feignies 2.5)">
-        <input type="text" id="odds" placeholder="Odds (e.g., 0.95)">
-        <select id="status">
-          <option value="Pending">Pending</option>
-          <option value="Win">Win</option>
-          <option value="Lose">Lose</option>
-        </select>
-        <button id="addBtn" class="bg-yellow-600 w-full py-3 rounded font-bold mt-2">Add Tip</button>
+    return new Response(`<html><head>${UI_CSS}</head><body class="p-4 max-w-2xl mx-auto">
+        <h2 class="text-3xl font-black text-yellow-500 mb-8">Admin Panel</h2>
+        
+        <div class="card-bg p-6 rounded-xl mb-10">
+          <input type="hidden" id="tipId">
+          <input type="password" id="pass" placeholder="Admin Password">
+          <div class="grid grid-cols-2 gap-3">
+            <input type="text" id="date" placeholder="Date (19/12 20:00)">
+            <input type="text" id="league" placeholder="League (FRAC)">
+          </div>
+          <input type="text" id="match" placeholder="Match (Team A - Team B)">
+          <input type="text" id="tip" placeholder="Tip (Over 2.5)">
+          <input type="text" id="odds" placeholder="Odds (0.95)">
+          <select id="status">
+            <option value="Pending">Pending</option>
+            <option value="Win">Win</option>
+            <option value="Lose">Lose</option>
+          </select>
+          <button id="saveBtn" class="bg-yellow-600 w-full py-4 rounded-lg font-black text-xl">SAVE / UPDATE TIP</button>
+        </div>
+
+        <h3 class="text-zinc-500 font-bold mb-4 uppercase text-sm">Manage Existing Tips</h3>
+        <div id="admin-tips-list" class="space-y-3 text-sm"></div>
+
         <script>
-          document.getElementById('addBtn').onclick = async () => {
+          const loadAdminTips = () => {
+            fetch('/api/tips').then(res => res.json()).then(data => {
+              document.getElementById('admin-tips-list').innerHTML = data.map(t => \`
+                <div class="card-bg p-4 rounded-lg flex justify-between items-center border-l-4 \${t.status === 'Win' ? 'border-red-500' : 'border-zinc-700'}">
+                  <div>
+                    <div class="font-bold text-yellow-500">\${t.match}</div>
+                    <div class="text-zinc-500">\${t.date} | \${t.status}</div>
+                  </div>
+                  <button onclick='editTip(\${JSON.stringify(t)})' class="bg-zinc-800 px-4 py-2 rounded font-bold text-sky-400 text-xs">EDIT</button>
+                </div>
+              \`).join('');
+            });
+          };
+
+          window.editTip = (t) => {
+            document.getElementById('tipId').value = t.id;
+            document.getElementById('date').value = t.date;
+            document.getElementById('league').value = t.league;
+            document.getElementById('match').value = t.match;
+            document.getElementById('tip').value = t.tip;
+            document.getElementById('odds').value = t.odds;
+            document.getElementById('status').value = t.status;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+
+          document.getElementById('saveBtn').onclick = async () => {
             const data = {
+              id: document.getElementById('tipId').value || null,
               password: document.getElementById('pass').value,
               date: document.getElementById('date').value,
               league: document.getElementById('league').value,
@@ -96,22 +145,22 @@ serve(async (req) => {
               status: document.getElementById('status').value
             };
             const res = await fetch('/api/tips', { method: 'POST', body: JSON.stringify(data) });
-            if(res.ok) { alert('✅ Success!'); location.reload(); }
-            else { alert('❌ Wrong Password!'); }
+            if(res.ok) { alert('✅ Done!'); location.reload(); }
+            else { alert('❌ Error/Wrong Password'); }
           };
+          loadAdminTips();
         </script>
     </body></html>`, { headers: { "Content-Type": "text/html" } });
   }
 
-  // 3. API: CONFIG (Password သတ်မှတ်ရန်)
+  // --- APIs (GET, POST, CONFIG) ---
   if (url.pathname === "/api/config" && req.method === "POST") {
-    if (storedPass) return new Response("Already Set", { status: 403 });
+    if (storedPass) return new Response("Forbidden", { status: 403 });
     const { pass } = await req.json();
     await kv.set(["config", "admin_password"], pass);
-    return new Response(JSON.stringify({ success: true }));
+    return new Response("OK");
   }
 
-  // 4. API: GET TIPS
   if (url.pathname === "/api/tips" && req.method === "GET") {
     const iter = kv.list({ prefix: ["tips"] });
     const tips = [];
@@ -119,14 +168,15 @@ serve(async (req) => {
     return new Response(JSON.stringify(tips.reverse()), { headers: { "Content-Type": "application/json" } });
   }
 
-  // 5. API: POST TIP (KV Password နဲ့ စစ်မယ်)
   if (url.pathname === "/api/tips" && req.method === "POST") {
     const body = await req.json();
     if (body.password !== storedPass) return new Response("Unauthorized", { status: 401 });
     
-    const id = Date.now().toString();
-    const newTip = { id, ...body };
+    // Edit ဆိုရင် ID ဟောင်းယူမယ်၊ အသစ်ဆိုရင် အသစ်ထုတ်မယ်
+    const id = body.id || Date.now().toString();
+    const newTip = { ...body, id };
     delete newTip.password;
+    
     await kv.set(["tips", id], newTip);
     return new Response(JSON.stringify({ success: true }));
   }
