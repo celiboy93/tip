@@ -39,7 +39,7 @@ serve(async (req) => {
   const url = new URL(req.url);
   const storedPass = await getStoredPassword();
 
-  // 1. HOME PAGE & MEMBER UI
+  // 1. HOME PAGE & USER DASHBOARD
   if (url.pathname === "/" && req.method === "GET") {
     return new Response(`<!DOCTYPE html><html><head>${UI_HEAD}</head><body class="p-6">
       <div id="toast-container"></div>
@@ -75,9 +75,12 @@ serve(async (req) => {
         <div class="card-bg rounded-2xl overflow-hidden shadow-2xl">
           <table class="w-full border-collapse">
             <thead><tr class="gold-gradient text-black text-[11px] font-black uppercase">
-              <th class="p-4 border-r border-black/10">Date</th><th class="p-4 border-r border-black/10">Match Details</th>
-              <th class="p-4 border-r border-black/10">Over Line</th><th class="p-4 border-r border-black/10">Odds</th>
-              <th class="p-4 border-r border-black/10 text-center">Score</th><th class="p-4 text-center">Status</th>
+              <th class="p-4 border-r border-black/10">Date</th>
+              <th class="p-4 border-r border-black/10">Match Details</th>
+              <th class="p-4 border-r border-black/10">Over Line</th>
+              <th class="p-4 border-r border-black/10">Odds</th>
+              <th class="p-4 border-r border-black/10 text-center">Score</th>
+              <th class="p-4 text-center">Status</th>
             </tr></thead>
             <tbody id="tips-table-body"></tbody>
           </table>
@@ -87,7 +90,7 @@ serve(async (req) => {
       </div>
 
       <script>
-        function showToast(m, t='info'){ const c=document.getElementById('toast-container'); const el=document.createElement('div'); el.className='toast '+t; el.innerText=m; c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show'); setTimeout(()=>el.remove(),300)},3000); }
+        let curPage = 1; function showToast(m, t='info'){ const c=document.getElementById('toast-container'); const el=document.createElement('div'); el.className='toast '+t; el.innerText=m; c.appendChild(el); setTimeout(()=>el.classList.add('show'),10); setTimeout(()=>{el.classList.remove('show'); setTimeout(()=>el.remove(),300)},3000); }
         function askConfirm(m, y){ document.getElementById('modal-msg').innerText=m; document.getElementById('custom-modal').classList.add('active'); document.getElementById('modal-yes').onclick=()=>{ y(); closeModal(); }; }
         function closeModal(){ document.getElementById('custom-modal').classList.remove('active'); }
         async function doLogin(){
@@ -104,10 +107,10 @@ serve(async (req) => {
         const userData=JSON.parse(localStorage.getItem('winner_user')); if(userData){ document.getElementById('guest-ui').classList.add('hidden'); document.getElementById('dashboard-header').classList.remove('hidden'); document.getElementById('displayUser').innerText=userData.user; document.getElementById('displayCredits').innerText=userData.credits||0; }
         async function fetchTips(page = 1){
           const res=await fetch('/api/tips?page=' + page + '&limit=20'); const {data, totalPages}=await res.json();
-          const unlocked=userData?(userData.unlockedTips||[]):[];
           document.getElementById('tips-table-body').innerHTML=data.map(t=>{
-            const isPending=t.status==='Pending'; const isUnlocked=unlocked.includes(t.id)||!isPending;
-            let mTxt=isUnlocked?t.match:'<span class="text-yellow-600/70 tracking-widest font-black uppercase text-[10px]">Locked Info</span>';
+            const isPending=t.status==='Pending'; const isUnlocked=userData?.unlockedTips?.includes(t.id)||!isPending;
+            // Locked Info Visibility Fix - Yellow-500 & Larger
+            let mTxt=isUnlocked?t.match:'<span class="text-yellow-500 tracking-widest font-black uppercase text-xs">Locked Info</span>';
             let tTxt=isUnlocked?('<span class="text-white font-bold">'+t.tip+'</span>'):(userData?'<button onclick="unlockTip(\\''+t.id+'\\')" class="unlock-btn">UNLOCK TIP</button>':'<span class="text-yellow-400 font-bold uppercase tracking-tighter">Locked 🔒</span>');
             let sClass = t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-700' : (t.status === 'Draw' ? 'text-zinc-400' : 'text-sky-600'));
             return '<tr class="match-row"><td class="p-4 text-zinc-200 text-sm font-black border-r border-white/5">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 text-zinc-500 font-mono border-r border-white/5">'+(isUnlocked?t.odds:'-')+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center">'+(t.result||'-:-')+'</td><td class="p-4 '+sClass+' italic text-3xl uppercase tracking-tighter text-center">'+t.status+'</td></tr>';
@@ -124,14 +127,9 @@ serve(async (req) => {
       </script></body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 2. ADMIN PANEL (PARSER FIX)
+  // 2. ADMIN PANEL (PARSER ERROR & DELETE FIX)
   if (url.pathname === "/admin" && req.method === "GET") {
-    let adminContent = "";
-    if (!storedPass) {
-       adminContent = '<div class="card-bg p-8 rounded-xl"><input type="password" id="newPass" class="stripe-input" placeholder="Setup Password"><button onclick="setPass()" class="btn-main">SETUP</button></div>' +
-                      '<script>async function setPass(){ const pass=document.getElementById("newPass").value; await fetch("/api/config",{method:"POST",body:JSON.stringify({pass})}); location.reload(); }</script>';
-    } else {
-       adminContent = `
+    const adminInner = !storedPass ? \`<div class="card-bg p-8 rounded-xl shadow-2xl"><input type="password" id="newPass" class="stripe-input" placeholder="Setup Password"><button onclick="setPass()" class="btn-main">SETUP</button></div><script>async function setPass(){ const pass=document.getElementById("newPass").value; await fetch("/api/config",{method:"POST",body:JSON.stringify({pass})}); location.reload(); }</script>\` : \`
         <div id="admin-login-box" class="card-bg p-8 rounded-xl shadow-2xl max-w-sm mx-auto">
            <input type="password" id="adminPassInput" class="stripe-input" placeholder="Admin Key"><button onclick="adminLogin()" class="btn-main uppercase">Login Admin</button>
         </div>
@@ -151,8 +149,8 @@ serve(async (req) => {
             <input type="text" id="match" placeholder="Match Details" class="stripe-input"><input type="text" id="tip" placeholder="Over Line" class="stripe-input">
             <div class="grid grid-cols-2 gap-4"><input type="text" id="odds" placeholder="Odds" class="stripe-input"><input type="text" id="result" placeholder="Score" class="stripe-input"></div>
             <select id="status" class="stripe-input !bg-zinc-900"><option value="Pending">Pending</option><option value="Win">Win</option><option value="Draw">Draw</option><option value="Lose">Lose</option></select>
-            <button onclick="saveTip()" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase tracking-widest">Save Record</button>
-            <button onclick="location.reload()" class="w-full mt-4 text-zinc-600 uppercase text-[10px] font-bold">Clear / Cancel</button>
+            <button onclick="saveTip()" id="saveBtn" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase tracking-widest">Save Record</button>
+            <button onclick="location.reload()" class="w-full mt-4 text-zinc-600 uppercase text-[10px] font-bold">Clear Form</button>
           </div>
           <h3 class="text-zinc-500 uppercase text-[10px] font-black mb-4 tracking-widest">Match History (Latest 30)</h3>
           <div id="admin-tips" class="space-y-2"></div>
@@ -169,7 +167,7 @@ serve(async (req) => {
             if(r.ok) { showToast('✅ Tip Saved Successfully!', 'success'); setTimeout(()=>location.reload(), 1000); } else { showToast('❌ Error!', 'error'); }
           }
           async function loadAdminData() {
-            const r1 = await fetch('/api/admin-users'); const u = await r1.json(); document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600"><div><span class="font-bold text-white">'+x.user+'</span><span class="ml-4 bg-sky-900/50 text-sky-400 px-3 py-0.5 rounded-full font-black">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del User</button></div>').join('');
+            const r1 = await fetch('/api/admin-users'); const u = await r1.json(); document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600"><div><span class="font-bold text-white">'+x.user+'</span><span class="ml-4 bg-sky-900/50 text-sky-400 px-3 py-0.5 rounded-full">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div>').join('');
             const r2 = await fetch('/api/tips?admin=true&limit=30'); const t = await r2.json();
             document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50"><span>['+y.date+'] '+y.match+'</span><div class="flex gap-4"><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline font-bold uppercase">Edit</button><button onclick=\\'deleteT("'+y.id+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div></div>').join('');
             const r3 = await fetch('/api/admin-history'); const h = await r3.json(); document.getElementById('history-list').innerHTML = h.map(i => '<div class="bg-zinc-900/30 p-2 border-b border-zinc-800 text-[10px]"><span class="text-sky-400 font-bold">'+i.user+'</span> unlocked <span class="text-yellow-500">'+i.match+'</span> <span class="text-zinc-600 italic">('+i.time+')</span></div>').join('');
@@ -177,10 +175,9 @@ serve(async (req) => {
           window.deleteT = async (id) => { if(!confirm('Delete match?')) return; await fetch('/api/delete-tip', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, id }) }); showToast('✅ Deleted!', 'success'); loadAdminData(); };
           window.deleteU = async (u) => { if(!confirm('Delete member?')) return; await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, user: u }) }); loadAdminData(); };
           window.editT = (t) => { document.getElementById('tipId').value=t.id; document.getElementById('date').value=t.date; document.getElementById('match').value=t.match; document.getElementById('tip').value=t.tip; document.getElementById('odds').value=t.odds; document.getElementById('result').value=t.result||''; document.getElementById('status').value=t.status; document.getElementById('lockTime').value=t.lockTime||''; document.getElementById('form-top').scrollIntoView({behavior:'smooth'}); };
-        </script>
-       `;
-    }
-    return new Response(`<!DOCTYPE html><html><head>${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto"><div id="toast-container"></div><h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase text-center tracking-tighter">Admin Console</h2>${adminContent}</body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
+        </script>\`;
+
+    return new Response(\`<!DOCTYPE html><html><head>\${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto"><div id="toast-container"></div><h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase text-center tracking-tighter">Admin Console</h2>\${adminInner}</body></html>\`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
   // --- API HANDLERS ---
@@ -213,7 +210,7 @@ serve(async (req) => {
     await kv.set(["history", Date.now().toString()], { user, match: tip.match, time: new Date().toLocaleTimeString('en-GB') }); return new Response(JSON.stringify(updated));
   }
   if (url.pathname === "/api/admin-verify" && req.method === "POST") { const { pass } = await req.json(); return pass === storedPass ? new Response("OK") : new Response("Error", { status: 401 }); }
-  if (url.pathname === "/api/user-change-password" && req.method === "POST") { const { user, oldPass, newPass } = await req.json(); const e = await kv.get(["users", user]); if (!e.value || e.value.pass !== oldPass) return new Response("Current Password Incorrect!", { status: 401 }); await kv.set(["users", user], { ...e.value, pass: newPass }); return new Response("OK"); }
+  if (url.pathname === "/api/user-change-password" && req.method === "POST") { const { user, oldPass, newPass } = await req.json(); const e = await kv.get(["users", user]); if (!e.value || e.value.pass !== oldPass) return new Response("Password Incorrect!", { status: 401 }); await kv.set(["users", user], { ...e.value, pass: newPass }); return new Response("OK"); }
   if (url.pathname === "/api/create-user" && req.method === "POST") { const { adminKey, user, pass, credits } = await req.json(); if (adminKey !== storedPass) return new Response("Error", { status: 401 }); const ex = await kv.get(["users", user]); const old = ex.value || { credits: 0, unlockedTips: [] }; await kv.set(["users", user], { ...old, user, pass: pass || old.pass, credits: (old.credits || 0) + (credits || 0) }); return new Response("OK"); }
   if (url.pathname === "/api/admin-users" && req.method === "GET") { const iter = kv.list({ prefix: ["users"] }); const u = []; for await (const res of iter) u.push(res.value); return new Response(JSON.stringify(u)); }
   if (url.pathname === "/api/admin-history" && req.method === "GET") { const iter = kv.list({ prefix: ["history"] }); const h = []; for await (const res of iter) h.push(res.value); return new Response(JSON.stringify(h.reverse().slice(0, 50))); }
