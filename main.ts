@@ -10,7 +10,7 @@ async function getStoredPassword() {
 const UI_HEAD = `
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1024"> 
-  <title>Winner-Match Deno Dev</title>
+  <title>Winner-Corner Deno Dev</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @keyframes glow { 0%, 100% { text-shadow: 0 0 10px #ef4444; color: #ef4444; } 50% { text-shadow: 0 0 25px #ef4444; color: #ff5f5f; } }
@@ -47,12 +47,12 @@ serve(async (req) => {
       <div id="pass-modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[10001]"><div class="modal-content"><h3 class="text-md font-bold mb-6 text-yellow-500 uppercase italic">Change Password</h3><input type="password" id="oldPass" placeholder="Current Password" class="stripe-input"><input type="password" id="newPass" placeholder="New Password" class="stripe-input"><div class="flex gap-3"><button onclick="submitPassChange()" class="flex-1 bg-yellow-600 text-black font-black py-2 rounded-md text-xs">UPDATE</button><button onclick="document.getElementById('pass-modal').style.display='none'" class="flex-1 bg-zinc-800 text-zinc-400 font-bold py-2 rounded-md text-xs">CANCEL</button></div></div></div>
 
       <div class="max-w-[1050px] mx-auto text-center">
-        <header class="py-12"><h1 class="text-6xl font-black italic text-yellow-500 uppercase tracking-tighter">Winner-Match Deno Dev</h1></header>
+        <header class="py-12"><h1 class="text-6xl font-black italic text-yellow-500 uppercase tracking-tighter">Winner-Corner Deno Dev</h1></header>
         
         <section class="mb-12 px-10 text-center">
           <h2 class="text-2xl font-bold text-white mb-4 uppercase tracking-[0.2em]">Premium Football Intelligence</h2>
           <p class="text-zinc-500 text-lg leading-relaxed italic max-w-3xl mx-auto">
-            Welcome to Winner-Match. Our expert analysis combines deep statistical data with professional market insights to deliver high-accuracy predictions. Elevate your winning game today.
+            Welcome to Winner-Corner. Our expert analysis combines deep statistical data with professional market insights to deliver high-accuracy predictions. Elevate your winning game today.
           </p>
           <div class="mt-8 flex justify-center gap-6">
               <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ 90% Accuracy</span>
@@ -95,7 +95,7 @@ serve(async (req) => {
           </table>
         </div>
         <div id="pagination" class="flex justify-center items-center gap-2 mt-12 mb-20"></div>
-        <footer class="py-16 border-t border-zinc-900 text-center"><p class="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em]">&copy; 2025 WINNER-MATCH.DENO.DEV | ALL RIGHTS RESERVED</p></footer>
+        <footer class="py-16 border-t border-zinc-900 text-center"><p class="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em]">&copy; 2025 WINNER-CORNER.DENO.DEV | ALL RIGHTS RESERVED</p></footer>
       </div>
 
       <script>
