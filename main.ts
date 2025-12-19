@@ -48,12 +48,9 @@ serve(async (req) => {
 
       <div class="max-w-[1050px] mx-auto text-center">
         <header class="py-12"><h1 class="text-6xl font-black italic text-yellow-500 uppercase tracking-tighter">Winner-Corner Deno Dev</h1></header>
-        
         <section class="mb-12 px-10 text-center">
           <h2 class="text-2xl font-bold text-white mb-4 uppercase tracking-[0.2em]">Premium Football Intelligence</h2>
-          <p class="text-zinc-500 text-lg leading-relaxed italic max-w-3xl mx-auto">
-            Welcome to Winner-Corner. Our expert analysis combines deep statistical data with professional market insights to deliver high-accuracy predictions. Elevate your winning game today.
-          </p>
+          <p class="text-zinc-500 text-lg leading-relaxed italic max-w-3xl mx-auto">Expert analysis powered by statistical data for high-accuracy predictions.</p>
           <div class="mt-8 flex justify-center gap-6">
               <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ 90% Accuracy</span>
               <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ Expert Analysts</span>
@@ -74,8 +71,8 @@ serve(async (req) => {
         </div>
 
         <div id="dashboard-header" class="hidden">
-           <div class="bg-zinc-900/50 p-8 rounded-2xl border border-zinc-800 mb-8 flex justify-between items-center text-left shadow-2xl">
-              <div><h2 class="text-yellow-500 font-black text-3xl uppercase italic tracking-tighter text-left">Member: <span id="displayUser" class="text-white"></span></h2>
+           <div class="bg-zinc-900/50 p-8 rounded-2xl border border-zinc-800 mb-8 flex justify-between items-center text-left">
+              <div><h2 class="text-yellow-500 font-black text-3xl uppercase italic tracking-tighter">Member: <span id="displayUser" class="text-white"></span></h2>
               <div class="flex gap-6 mt-3 items-center">
                 <p class="text-zinc-400 text-sm font-bold uppercase tracking-widest">Balance: <span id="displayCredits" class="text-2xl bg-sky-900 text-sky-400 px-4 py-1 rounded-lg ml-1 font-black border border-sky-800">0</span> <span class="text-[10px] ml-1 font-black">Credits</span></p>
                 <button onclick="document.getElementById('pass-modal').style.display='flex'" class="text-sky-500 underline text-xs font-black uppercase">Change Password</button>
@@ -105,7 +102,7 @@ serve(async (req) => {
         async function doLogin(){
           const u=document.getElementById('uName').value; const p=document.getElementById('uPass').value;
           const res=await fetch('/api/user-login',{method:'POST',body:JSON.stringify({user:u,pass:p})});
-          if(res.ok){ const d=await res.json(); localStorage.setItem('winner_user',JSON.stringify(d)); location.reload(); } else { showToast('Invalid Account Details!','error'); }
+          if(res.ok){ const d=await res.json(); localStorage.setItem('winner_user',JSON.stringify(d)); location.reload(); } else { showToast('Invalid Login!','error'); }
         }
         function logout(){ localStorage.removeItem('winner_user'); location.reload(); }
         async function submitPassChange() {
@@ -121,7 +118,7 @@ serve(async (req) => {
             let mTxt=isUnlocked?t.match:'<span class="text-yellow-500 tracking-widest font-black uppercase text-xs">Locked Info</span>';
             let tTxt=isUnlocked?('<span class="text-white font-bold">'+t.tip+'</span>'):(userData?'<button onclick="unlockTip(\\''+t.id+'\\')" class="unlock-btn">UNLOCK TIP</button>':'<span class="text-yellow-400 font-bold uppercase tracking-tighter">Locked 🔒</span>');
             let sClass = t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-700' : (t.status === 'Draw' ? 'text-zinc-400' : 'text-sky-600'));
-            return '<tr class="match-row"><td class="p-4 text-zinc-200 text-sm font-black border-r border-white/5">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 text-zinc-500 font-mono border-r border-white/5">'+(isUnlocked?t.odds:'-')+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center">'+(t.result||'-:-')+'</td><td class="p-4 '+sClass+' italic text-3xl uppercase tracking-tighter text-center">'+t.status+'</td></tr>';
+            return '<tr class="match-row"><td class="p-4 text-zinc-200 text-sm font-black border-r border-white/5 text-center text-nowrap">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 text-zinc-500 font-mono border-r border-white/5">'+(isUnlocked?t.odds:'-')+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center text-nowrap">'+(t.result||'-:-')+'</td><td class="p-4 '+sClass+' italic text-3xl uppercase tracking-tighter text-center">'+t.status+'</td></tr>';
           }).join('');
           let pgHtml = ''; for(let i=1; i<=totalPages; i++) pgHtml += '<button onclick="fetchTips(' + i + ')" class="page-btn ' + (i === page ? 'active' : '') + '">' + i + '</button>';
           document.getElementById('pagination').innerHTML = pgHtml;
@@ -135,36 +132,45 @@ serve(async (req) => {
       </script></body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // 2. ADMIN PANEL (PARSER FIX)
+  // 2. ADMIN PANEL (FULL CORRECTED)
   if (url.pathname === "/admin" && req.method === "GET") {
-    let adminUI = "";
+    let adminInner = "";
     if (!storedPass) {
-       adminUI = '<div class="card-bg p-8 rounded-xl shadow-2xl max-w-sm mx-auto"><h2 class="text-xl font-black text-yellow-500 mb-6 uppercase text-center">Initial Setup</h2><input type="password" id="newPass" class="stripe-input" placeholder="Set Password"><button onclick="setPass()" class="btn-main">SAVE PASSWORD</button></div><script>async function setPass(){ const pass=document.getElementById("newPass").value; await fetch("/api/config",{method:"POST",body:JSON.stringify({pass})}); location.reload(); }</script>';
+       adminInner = `
+        <div class="card-bg p-8 rounded-xl shadow-2xl max-w-sm mx-auto">
+          <h2 class="text-xl font-black text-yellow-500 mb-6 uppercase text-center">Initial Setup</h2>
+          <input type="password" id="newPass" class="stripe-input" placeholder="Set Admin Password">
+          <button onclick="setPass()" class="btn-main">SAVE PASSWORD</button>
+        </div>
+        <script>async function setPass(){ const pass=document.getElementById("newPass").value; await fetch("/api/config",{method:"POST",body:JSON.stringify({pass})}); location.reload(); }</script>`;
     } else {
-       adminUI = `
+       adminInner = `
         <div id="admin-login-box" class="card-bg p-8 rounded-xl shadow-2xl max-w-sm mx-auto">
            <input type="password" id="adminPassInput" class="stripe-input" placeholder="Admin Key"><button onclick="adminLogin()" class="btn-main uppercase">Login Admin</button>
         </div>
         <div id="admin-dashboard" class="hidden">
           <div class="flex justify-between items-center mb-8 bg-zinc-900 p-4 rounded-lg"><span class="font-black text-yellow-500 uppercase text-[10px]">Session Active</span><button onclick="sessionStorage.removeItem('admin_key'); location.reload();" class="text-zinc-500 underline text-[10px]">Logout</button></div>
-          <div class="card-bg p-6 rounded-xl mb-12 border-t-4 border-green-600 shadow-2xl"><h3 class="text-green-500 font-black mb-4 uppercase text-xs tracking-widest text-left">Live Unlock History</h3><div id="history-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 text-left"></div></div>
-          <div class="card-bg p-8 rounded-2xl mb-12 border-t-4 border-sky-500">
-            <h3 class="text-sky-500 font-black mb-4 uppercase text-xs text-left">Member Manager</h3>
+          <div class="card-bg p-6 rounded-xl mb-12 border-t-4 border-green-600 shadow-2xl">
+             <h3 class="text-green-500 font-black mb-4 uppercase text-xs tracking-widest text-left">Live Unlock History</h3>
+             <div id="history-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 text-left"></div>
+          </div>
+          <div class="card-bg p-8 rounded-2xl mb-12 border-t-4 border-sky-500 text-left">
+            <h3 class="text-sky-500 font-black mb-4 uppercase text-xs">Member Manager</h3>
             <div class="grid grid-cols-2 gap-4"><input type="text" id="targetUser" placeholder="Username" class="stripe-input"><input type="number" id="targetCredits" placeholder="ADD Credits" class="stripe-input"></div>
             <input type="text" id="targetPass" placeholder="User Pass (Empty to Skip)" class="stripe-input"><button onclick="saveUser()" class="bg-sky-600 w-full py-4 rounded font-bold text-xs uppercase tracking-widest">Save Member</button>
           </div>
           <div id="user-list" class="space-y-2 mb-12 text-left"></div>
-          <div class="card-bg p-8 rounded-2xl border-t-4 border-yellow-500 mb-10" id="form-top">
-            <h3 class="text-yellow-500 font-black mb-4 uppercase text-xs text-left">Post/Edit Tip</h3>
+          <div class="card-bg p-8 rounded-2xl border-t-4 border-yellow-500 mb-10 text-left" id="form-top">
+            <h3 class="text-yellow-500 font-black mb-4 uppercase text-xs">Post/Edit Tip Record</h3>
             <input type="text" id="tipId" placeholder="ID (Auto for New)" class="stripe-input" readonly>
             <div class="grid grid-cols-2 gap-4"><input type="text" id="date" placeholder="Date (19/12)" class="stripe-input"><input type="time" id="lockTime" class="stripe-input"></div>
             <input type="text" id="match" placeholder="Match Details" class="stripe-input"><input type="text" id="tip" placeholder="Over Line" class="stripe-input">
             <div class="grid grid-cols-2 gap-4"><input type="text" id="odds" placeholder="Odds" class="stripe-input"><input type="text" id="result" placeholder="Score" class="stripe-input"></div>
             <select id="status" class="stripe-input !bg-zinc-900"><option value="Pending">Pending</option><option value="Win">Win</option><option value="Draw">Draw</option><option value="Lose">Lose</option></select>
-            <button onclick="saveTip()" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase tracking-widest">Save Record</button>
+            <button onclick="saveTip()" id="saveBtn" class="bg-yellow-600 text-black w-full py-4 rounded font-black uppercase tracking-widest">Save Record</button>
             <button onclick="location.reload()" class="w-full mt-4 text-zinc-600 uppercase text-[10px] font-bold">Clear Form</button>
           </div>
-          <h3 class="text-zinc-500 uppercase text-[10px] font-black mb-4 tracking-widest text-left">Match History (Latest 30)</h3>
+          <h3 class="text-zinc-500 uppercase text-[10px] font-black mb-4 tracking-widest text-left">Latest 30 Match History (Editable)</h3>
           <div id="admin-tips" class="space-y-2 text-left"></div>
         </div>
         <script>
@@ -176,24 +182,24 @@ serve(async (req) => {
           async function saveTip() {
             const d = { password: adminSessionKey, id: document.getElementById('tipId').value, date: document.getElementById('date').value, match: document.getElementById('match').value, tip: document.getElementById('tip').value, odds: document.getElementById('odds').value, result: document.getElementById('result').value, status: document.getElementById('status').value, lockTime: document.getElementById('lockTime').value };
             const r = await fetch('/api/tips', { method: 'POST', body: JSON.stringify(d) });
-            if(r.ok) { showToast('✅ Tip Saved Successfully!', 'success'); setTimeout(()=>location.reload(), 1000); } else { showToast('❌ Error!', 'error'); }
+            if(r.ok) { showToast('✅ Tip Saved Successfully!', 'success'); setTimeout(()=>location.reload(), 1000); } else { showToast('❌ Error Saving!', 'error'); }
           }
           async function loadAdminData() {
             const r1 = await fetch('/api/admin-users'); const u = await r1.json(); document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600 mb-2"><div><span class="font-bold text-white">'+x.user+'</span><br><span class="bg-sky-900/50 text-sky-400 px-2 py-0.5 rounded-full font-black">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div>').join('');
             const r2 = await fetch('/api/tips?admin=true&limit=30'); const t = await r2.json();
-            document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50 mb-2"><span>['+y.date+'] '+y.match+'</span><div class="flex gap-4"><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline font-bold uppercase">Edit</button><button onclick=\\'deleteT("'+y.id+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div></div>').join('');
+            document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50 mb-2"><span>['+y.date+'] '+y.match+'</span><div class="flex gap-4 text-nowrap"><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline font-bold uppercase">Edit</button><button onclick=\\'deleteT("'+y.id+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div></div>').join('');
             const r3 = await fetch('/api/admin-history'); const h = await r3.json(); document.getElementById('history-list').innerHTML = h.map(i => '<div class="bg-zinc-900/30 p-2 border-b border-zinc-800 text-[10px] mb-1"><span class="text-sky-400 font-bold">'+i.user+'</span> unlocked <span class="text-yellow-500">'+i.match+'</span> <span class="text-zinc-600 italic">('+i.time+')</span></div>').join('');
           }
           window.deleteT = async (id) => { if(!confirm('Delete match?')) return; await fetch('/api/delete-tip', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, id }) }); showToast('✅ Deleted!', 'success'); loadAdminData(); };
           window.deleteU = async (u) => { if(!confirm('Delete member?')) return; await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ adminKey: adminSessionKey, user: u }) }); loadAdminData(); };
           window.editT = (t) => { document.getElementById('tipId').value=t.id; document.getElementById('date').value=t.date; document.getElementById('match').value=t.match; document.getElementById('tip').value=t.tip; document.getElementById('odds').value=t.odds; document.getElementById('result').value=t.result||''; document.getElementById('status').value=t.status; document.getElementById('lockTime').value=t.lockTime||''; document.getElementById('form-top').scrollIntoView({behavior:'smooth'}); };
-        </script>`;
+        </script>\`;
     }
     
-    return new Response(`<!DOCTYPE html><html><head>${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto"><div id="toast-container"></div><h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase text-center tracking-tighter">Admin Console</h2>${adminUI}</body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
+    return new Response(`<!DOCTYPE html><html><head>${UI_HEAD}</head><body class="p-6 max-w-2xl mx-auto"><div id="toast-container"></div><h2 class="text-3xl font-black text-yellow-500 mb-8 italic uppercase text-center tracking-tighter">Admin Console</h2>${adminInner}</body></html>`, { headers: { "Content-Type": "text/html; charset=UTF-8" } });
   }
 
-  // --- API HANDLERS ---
+  // --- API HANDLERS (STABLE) ---
   if (url.pathname === "/api/tips" && req.method === "GET") {
     const page = parseInt(url.searchParams.get("page") || "1"); const limit = parseInt(url.searchParams.get("limit") || "20");
     const iter = kv.list({ prefix: ["tips"] }); const tips = []; for await (const res of iter) tips.push(res.value);
