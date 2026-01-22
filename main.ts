@@ -65,7 +65,7 @@ serve(async (req) => {
 
       <div class="max-w-[1050px] mx-auto text-center">
         <header class="py-12"><h1 class="text-6xl font-black italic text-yellow-500 uppercase tracking-tighter">Winner-Corner Deno Dev</h1></header>
-        <section class="mb-12 px-10 text-center">
+        <section class="mb-8 px-10 text-center">
           <h2 class="text-2xl font-bold text-white mb-4 uppercase tracking-[0.2em]">Premium Football Intelligence</h2>
           <p class="text-zinc-500 text-lg leading-relaxed italic max-w-3xl mx-auto">
             Welcome to Winner-Corner. Our expert analysis combines deep statistical data with professional market insights to deliver high-accuracy predictions. Elevate your winning game today.
@@ -75,6 +75,23 @@ serve(async (req) => {
               <span class="text-xs font-black text-yellow-500 uppercase tracking-widest border-b-2 border-yellow-500 pb-1">✓ Expert Analysts</span>
           </div>
         </section>
+        
+        <!-- NEW STATS DISPLAY -->
+        <div class="grid grid-cols-3 gap-4 max-w-2xl mx-auto mb-16 px-4">
+          <div class="bg-zinc-900/80 border border-green-900/50 p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transition hover:scale-105">
+            <h3 class="text-green-500 font-black text-4xl mb-1" id="stat-win">0</h3>
+            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Total Wins</span>
+          </div>
+          <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transition hover:scale-105">
+            <h3 class="text-zinc-400 font-black text-4xl mb-1" id="stat-draw">0</h3>
+            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Draws</span>
+          </div>
+          <div class="bg-zinc-900/80 border border-red-900/50 p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transition hover:scale-105">
+            <h3 class="text-red-500 font-black text-4xl mb-1" id="stat-lose">0</h3>
+            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Losses</span>
+          </div>
+        </div>
+        <!-- END STATS DISPLAY -->
 
         <div id="guest-ui">
           <div class="max-w-md mx-auto card-bg p-10 rounded-2xl shadow-2xl border-t-4 border-yellow-500 mb-20">
@@ -153,7 +170,17 @@ serve(async (req) => {
           else { document.getElementById('guest-ui').classList.add('hidden'); document.getElementById('dashboard-header').classList.remove('hidden'); document.getElementById('displayUser').innerText=userData.user; document.getElementById('displayCredits').innerText=userData.credits||0; }
         }
         async function fetchTips(page = 1){
-          const res=await fetch('/api/tips?page=' + page + '&limit=20'); const {data, totalPages}=await res.json();
+          const res=await fetch('/api/tips?page=' + page + '&limit=20'); 
+          // UPDATED: Destructure stats
+          const {data, totalPages, stats}=await res.json();
+          
+          // UPDATED: Display stats
+          if(stats){
+             document.getElementById('stat-win').innerText = stats.Win || 0;
+             document.getElementById('stat-draw').innerText = stats.Draw || 0;
+             document.getElementById('stat-lose').innerText = stats.Lose || 0;
+          }
+
           document.getElementById('tips-table-body').innerHTML=data.map(t=>{
             const isPending=t.status==='Pending'; 
             const isUnlocked=userData?.unlockedTips?.includes(t.id)||!isPending;
@@ -163,7 +190,6 @@ serve(async (req) => {
             let tTxt=isUnlocked?('<span class="text-white font-bold">'+t.tip+'</span>'):(userData?'<button onclick="unlockTip(\\''+t.id+'\\', '+t.isPlatinum+')" class="unlock-btn">UNLOCK TIP</button>':'<span class="text-yellow-400 font-bold uppercase tracking-tighter">Locked 🔒</span>');
             let sClass = t.status === 'Win' ? 'win-effect' : (t.status === 'Lose' ? 'text-zinc-700' : (t.status === 'Draw' ? 'text-zinc-400' : 'text-sky-600'));
             
-            // Fixed Column Classes to maintain original proportions
             return '<tr class="match-row"><td class="p-4 text-zinc-200 text-sm font-black border-r border-white/5 text-nowrap">'+t.date+'</td><td class="p-4 text-yellow-500 font-bold text-lg border-r border-white/5">'+mTxt+'</td><td class="p-4 border-r border-white/5">'+tTxt+'</td><td class="p-4 text-zinc-500 font-mono border-r border-white/5 text-center">'+(isUnlocked?t.odds:'-')+'</td><td class="p-4 font-black text-2xl text-zinc-300 border-r border-white/5 text-center text-nowrap">'+(t.result||'-:-')+'</td><td class="p-4 '+sClass+' italic text-3xl uppercase tracking-tighter text-center">'+t.status+'</td></tr>';
           }).join('');
           let pgHtml = ''; for(let i=1; i<=totalPages; i++) pgHtml += '<button onclick="fetchTips(' + i + ')" class="page-btn ' + (i === page ? 'active' : '') + '">' + i + '</button>';
@@ -259,9 +285,24 @@ serve(async (req) => {
   // --- 3. API HANDLERS ---
   if (url.pathname === "/api/tips" && req.method === "GET") {
     const page = parseInt(url.searchParams.get("page") || "1"); const limit = parseInt(url.searchParams.get("limit") || "20");
-    const iter = kv.list({ prefix: ["tips"] }); const tips = []; for await (const res of iter) tips.push(res.value);
+    const iter = kv.list({ prefix: ["tips"] }); const tips = []; 
+    
+    // Calculate Stats
+    let stats = { Win: 0, Draw: 0, Lose: 0 };
+    for await (const res of iter) {
+        const t = res.value;
+        tips.push(t);
+        if(t.status === 'Win') stats.Win++;
+        else if(t.status === 'Draw') stats.Draw++;
+        else if(t.status === 'Lose') stats.Lose++;
+    }
+
     tips.sort((a, b) => Number(b.id) - Number(a.id)); const start = (page - 1) * limit;
-    return new Response(JSON.stringify({ data: tips.slice(start, start + limit), totalPages: Math.ceil(tips.length / limit) }));
+    return new Response(JSON.stringify({ 
+        data: tips.slice(start, start + limit), 
+        totalPages: Math.ceil(tips.length / limit),
+        stats // Include stats in response
+    }));
   }
   if (url.pathname === "/api/tips" && req.method === "POST") {
     const body = await req.json(); if (body.password !== storedPass) return new Response("Error", { status: 401 });
