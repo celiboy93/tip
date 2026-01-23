@@ -269,41 +269,10 @@ serve(async (req) => {
             if(r.ok) { location.reload(); }
           }
           async function loadAdminData() {
-            // အချိန်ပြောင်းပေးမည့် Function အသစ်
-          function getMMTime(ts) {
-             if(!ts) return '<span class="text-zinc-600">Never</span>';
-             return new Date(ts).toLocaleString('en-GB', { 
-               timeZone: 'Asia/Yangon', 
-               day: '2-digit', month: '2-digit', year: 'numeric', 
-               hour: '2-digit', minute: '2-digit', hour12: true 
-             });
-          }
-
-          // Admin Data တွေကို ဆွဲယူပြသပေးမည့် Function (ပြင်ဆင်ပြီး)
-          async function loadAdminData() {
-            // User List (Last Seen အချိန်ပါ ထည့်ထားသည်)
-            const r1 = await fetch('/api/admin-users'); 
-            const u = await r1.json(); 
-            document.getElementById('user-list').innerHTML = u.map(x => `
-              <div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600 mb-1">
-                <div>
-                  <span class="font-bold text-white">${x.user}</span><br>
-                  <span class="text-sky-400 font-black">Cr: ${x.credits||0}</span>
-                  <div class="mt-1 text-[10px] text-zinc-400">Last Seen: <span class="text-yellow-500">${getMMTime(x.lastLogin)}</span></div>
-                </div>
-                <button onclick="deleteU('${x.user}')" class="text-red-500 underline font-bold uppercase">Del</button>
-              </div>`
-            ).join('');
-
-            // Tips List (အရင်အတိုင်း)
-            const r2 = await fetch('/api/tips?admin=true&limit=30'); 
-            const t = await r2.json();
+            const r1 = await fetch('/api/admin-users'); const u = await r1.json(); document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600 mb-1"><div><span class="font-bold text-white">'+x.user+'</span><br><span class="text-sky-400 font-black">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div>').join('');
+            const r2 = await fetch('/api/tips?admin=true&limit=30'); const t = await r2.json();
             document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50 mb-1"><span>['+y.date+'] '+(y.isPlatinum?'💎 ':'')+y.match+'</span><div class="flex gap-4 text-nowrap"><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline uppercase">Edit</button><button onclick=\\'deleteT("'+y.id+'")\\' class="text-red-500 underline uppercase">Del</button></div></div>').join('');
-            
-            // History List (အရင်အတိုင်း)
-            const r3 = await fetch('/api/admin-history'); 
-            const h = await r3.json(); 
-            document.getElementById('history-list').innerHTML = h.map(i => '<div class="text-[10px] mb-1 border-b border-zinc-900 pb-1"><span class="text-sky-400 font-bold">'+i.user+'</span> unlocked <span class="text-yellow-500">'+i.match+'</span> <span class="text-zinc-600">('+i.time+')</span></div>').join('');
+            const r3 = await fetch('/api/admin-history'); const h = await r3.json(); document.getElementById('history-list').innerHTML = h.map(i => '<div class="text-[10px] mb-1 border-b border-zinc-900 pb-1"><span class="text-sky-400 font-bold">'+i.user+'</span> unlocked <span class="text-yellow-500">'+i.match+'</span> <span class="text-zinc-600">('+i.time+')</span></div>').join('');
           }
           window.deleteT = async (id) => { if(!confirm('Delete Match?')) return; await fetch('/api/delete-tip', { method: 'POST', body: JSON.stringify({ adminKey: skey, id }) }); loadAdminData(); };
           window.deleteU = async (u) => { if(!confirm('Delete User?')) return; await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ adminKey: skey, user: u }) }); loadAdminData(); };
