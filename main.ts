@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 
-const kv = await Deno.openKv();    
+const kv = await Deno.openKv();
 
 async function getStoredPassword() {
   const entry = await kv.get(["config", "admin_password"]);
@@ -76,7 +76,7 @@ serve(async (req) => {
           </div>
         </section>
         
-        <!-- NEW STATS DISPLAY -->
+        <!-- STATS DISPLAY -->
         <div class="grid grid-cols-3 gap-4 max-w-2xl mx-auto mb-16 px-4">
           <div class="bg-zinc-900/80 border border-green-900/50 p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transition hover:scale-105">
             <h3 class="text-green-500 font-black text-4xl mb-1" id="stat-win">0</h3>
@@ -91,7 +91,6 @@ serve(async (req) => {
             <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Losses</span>
           </div>
         </div>
-        <!-- END STATS DISPLAY -->
 
         <div id="guest-ui">
           <div class="max-w-md mx-auto card-bg p-10 rounded-2xl shadow-2xl border-t-4 border-yellow-500 mb-20">
@@ -171,10 +170,8 @@ serve(async (req) => {
         }
         async function fetchTips(page = 1){
           const res=await fetch('/api/tips?page=' + page + '&limit=20'); 
-          // UPDATED: Destructure stats
           const {data, totalPages, stats}=await res.json();
           
-          // UPDATED: Display stats
           if(stats){
              document.getElementById('stat-win').innerText = stats.Win || 0;
              document.getElementById('stat-draw').innerText = stats.Draw || 0;
@@ -254,26 +251,48 @@ serve(async (req) => {
         <script>
           const skey = sessionStorage.getItem('admin_key');
           if(skey) { document.getElementById('admin-login-box').classList.add('hidden'); document.getElementById('admin-dashboard').classList.remove('hidden'); loadAdminData(); }
+          
           function askConfirm(m, y){ 
             document.getElementById('modal-msg').innerText=m; 
             document.getElementById('custom-modal').classList.add('active'); 
             document.getElementById('modal-yes').onclick=()=>{ y(); closeModal(); }; 
           }
           function closeModal(){ document.getElementById('custom-modal').classList.remove('active'); }
+          
           async function adminLogin() { const p = document.getElementById('adminPassInput').value; const r = await fetch('/api/admin-verify', { method: 'POST', body: JSON.stringify({ pass: p }) }); if(r.ok) { sessionStorage.setItem('admin_key', p); location.reload(); } else { alert('Error!'); } }
+          
           async function saveUser() { const d = { adminKey: skey, user: document.getElementById('targetUser').value, pass: document.getElementById('targetPass').value, credits: parseInt(document.getElementById('targetCredits').value || 0) }; await fetch('/api/create-user', { method: 'POST', body: JSON.stringify(d) }); loadAdminData(); }
+          
           function saveTipConfirm() { askConfirm("Are you sure you want to save this record?", saveTip); }
+          
           async function saveTip() {
             const d = { password: skey, id: document.getElementById('tipId').value, date: document.getElementById('date').value, match: document.getElementById('match').value, tip: document.getElementById('tip').value, odds: document.getElementById('odds').value, result: document.getElementById('result').value, status: document.getElementById('status').value, lockDate: document.getElementById('lockDate').value, lockTime: document.getElementById('lockTime').value, isPlatinum: document.getElementById('isPlatinum').checked };
             const r = await fetch('/api/tips', { method: 'POST', body: JSON.stringify(d) });
             if(r.ok) { location.reload(); }
           }
+          
+          // --- TIME HELPER ---
+          function getMMTime(ts) {
+             if(!ts) return '<span class="text-zinc-600">Never</span>';
+             return new Date(ts).toLocaleString('en-GB', { 
+               timeZone: 'Asia/Yangon', 
+               day: '2-digit', month: '2-digit', year: 'numeric', 
+               hour: '2-digit', minute: '2-digit', hour12: true 
+             });
+          }
+
           async function loadAdminData() {
-            const r1 = await fetch('/api/admin-users'); const u = await r1.json(); document.getElementById('user-list').innerHTML = u.map(x => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600 mb-1"><div><span class="font-bold text-white">'+x.user+'</span><br><span class="text-sky-400 font-black">Cr: '+(x.credits||0)+'</span></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div>').join('');
+            const r1 = await fetch('/api/admin-users'); const u = await r1.json(); 
+            document.getElementById('user-list').innerHTML = u.map(x => 
+              '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-4 border-sky-600 mb-1"><div><span class="font-bold text-white">'+x.user+'</span><br><span class="text-sky-400 font-black">Cr: '+(x.credits||0)+'</span><div class="mt-1 text-[10px] text-zinc-400">Last Seen: <span class="text-yellow-500">'+getMMTime(x.lastLogin)+'</span></div></div><button onclick=\\'deleteU("'+x.user+'")\\' class="text-red-500 underline font-bold uppercase">Del</button></div>'
+            ).join('');
+            
             const r2 = await fetch('/api/tips?admin=true&limit=30'); const t = await r2.json();
             document.getElementById('admin-tips').innerHTML = t.data.map(y => '<div class="card-bg p-3 flex justify-between items-center text-xs border-l-2 border-yellow-500/50 mb-1"><span>['+y.date+'] '+(y.isPlatinum?'💎 ':'')+y.match+'</span><div class="flex gap-4 text-nowrap"><button onclick=\\'editT('+JSON.stringify(y)+')\\' class="text-sky-400 underline uppercase">Edit</button><button onclick=\\'deleteT("'+y.id+'")\\' class="text-red-500 underline uppercase">Del</button></div></div>').join('');
+            
             const r3 = await fetch('/api/admin-history'); const h = await r3.json(); document.getElementById('history-list').innerHTML = h.map(i => '<div class="text-[10px] mb-1 border-b border-zinc-900 pb-1"><span class="text-sky-400 font-bold">'+i.user+'</span> unlocked <span class="text-yellow-500">'+i.match+'</span> <span class="text-zinc-600">('+i.time+')</span></div>').join('');
           }
+          
           window.deleteT = async (id) => { if(!confirm('Delete Match?')) return; await fetch('/api/delete-tip', { method: 'POST', body: JSON.stringify({ adminKey: skey, id }) }); loadAdminData(); };
           window.deleteU = async (u) => { if(!confirm('Delete User?')) return; await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ adminKey: skey, user: u }) }); loadAdminData(); };
           window.editT = (t) => { document.getElementById('tipId').value=t.id; document.getElementById('date').value=t.date; document.getElementById('match').value=t.match; document.getElementById('tip').value=t.tip; document.getElementById('odds').value=t.odds; document.getElementById('result').value=t.result||''; document.getElementById('status').value=t.status; document.getElementById('lockDate').value=t.lockDate||''; document.getElementById('lockTime').value=t.lockTime||''; document.getElementById('isPlatinum').checked=!!t.isPlatinum; document.getElementById('form-top').scrollIntoView({behavior:'smooth'}); };
@@ -343,18 +362,21 @@ serve(async (req) => {
   if (url.pathname === "/api/delete-tip" && req.method === "POST") { const { adminKey, id } = await req.json(); if (adminKey !== storedPass) return new Response("Error", { status: 401 }); await kv.delete(["tips", id]); return new Response("OK"); }
   if (url.pathname === "/api/delete-user" && req.method === "POST") { const { adminKey, user } = await req.json(); if (adminKey !== storedPass) return new Response("Error", { status: 401 }); await kv.delete(["users", user]); return new Response("OK"); }
   if (url.pathname === "/api/config" && req.method === "POST") { const { pass } = await req.json(); await kv.set(["config", "admin_password"], pass); return new Response("OK"); }
+  
+  // --- UPDATED LOGIN API (Stores Last Login Time) ---
   if (url.pathname === "/api/user-login" && req.method === "POST") { 
     const { user, pass } = await req.json(); 
     const entry = await kv.get(["users", user]); 
     
     if (entry.value && entry.value.pass === pass) {
-      // Login အောင်မြင်ရင် အချိန်ပါ ထပ်ထည့်ပြီး Save မယ်
+      // Login successful: Update lastLogin time
       const updatedData = { ...entry.value, lastLogin: Date.now() };
       await kv.set(["users", user], updatedData);
       return new Response(JSON.stringify(updatedData)); 
     }
     return new Response("Error", { status: 401 }); 
   }
+
   if (url.pathname === "/api/user-change-password" && req.method === "POST") { const { user, oldPass, newPass } = await req.json(); const e = await kv.get(["users", user]); if (!e.value || e.value.pass !== oldPass) return new Response("Incorrect!", { status: 401 }); await kv.set(["users", user], { ...e.value, pass: newPass }); return new Response("OK"); }
 
   return new Response("Not Found", { status: 404 });
