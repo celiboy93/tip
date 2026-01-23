@@ -154,7 +154,7 @@ serve(async (req) => {
           const res=await fetch('/api/user-login',{method:'POST',body:JSON.stringify({user:u,pass:p})});
           if(res.ok){ 
             const d=await res.json(); 
-            d.remUntil = rem ? Date.now()+(5*24*60*60*1000) : null;
+            d.remUntil = rem ? Date.now()+(2*24*60*60*1000) : Date.now()+(1*24*60*60*1000);
             localStorage.setItem('winner_user',JSON.stringify(d)); location.reload(); 
           } else { showToast('Invalid Login!','error'); }
         }
