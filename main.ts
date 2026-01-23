@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 
-const kv = await Deno.openKv();
+const kv = await Deno.openKv();  
 
 async function getStoredPassword() {
   const entry = await kv.get(["config", "admin_password"]);
